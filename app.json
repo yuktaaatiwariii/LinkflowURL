@@ -12,6 +12,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "com.linkflowurl.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -24,10 +25,12 @@
     "web": {
       "output": "static",
       "favicon": "./assets/images/favicon.png",
-       "bundler": "metro"
+      "bundler": "metro"
     },
     "plugins": [
       "expo-router",
+      "expo-secure-store",
+      "@clerk/expo",
       [
         "expo-splash-screen",
         {
@@ -39,7 +42,8 @@
             "backgroundColor": "#000000"
           }
         }
-      ]
+      ],
+      "expo-web-browser"
     ],
     "experiments": {
       "typedRoutes": true,
