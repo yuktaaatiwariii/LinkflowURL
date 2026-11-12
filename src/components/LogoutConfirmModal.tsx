@@ -10,6 +10,7 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../constants/colors';
 
 interface LogoutConfirmModalProps {
@@ -27,6 +28,8 @@ export function LogoutConfirmModal({
   loading,
   error,
 }: LogoutConfirmModalProps) {
+  const insets = useSafeAreaInsets();
+
   return (
     <Modal
       transparent={true}
@@ -35,7 +38,17 @@ export function LogoutConfirmModal({
       animationType="fade"
     >
       <TouchableWithoutFeedback onPress={onCancel}>
-        <View style={styles.backdrop}>
+        <View
+          style={[
+            styles.backdrop,
+            {
+              paddingTop: 24 + insets.top,
+              paddingBottom: 24 + insets.bottom,
+              paddingLeft: 24 + insets.left,
+              paddingRight: 24 + insets.right,
+            },
+          ]}
+        >
           <View style={styles.card}>
           <View style={styles.header}>
             <Text style={styles.title}>Sign Out</Text>

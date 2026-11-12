@@ -50,6 +50,76 @@ CREATE TABLE IF NOT EXISTS qr_codes (
 );
 
 CREATE INDEX IF NOT EXISTS idx_qr_codes_user_id ON qr_codes(user_id);
+
+-- Device Push Tokens (Expo push; fans out to FCM on Android / APNs on iOS)
+CREATE TABLE IF NOT EXISTS device_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  expo_push_token TEXT NOT NULL,
+  platform VARCHAR(20) NOT NULL DEFAULT 'unknown',
+  device_name VARCHAR(255),
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_device_tokens_user_id ON device_tokens(user_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_device_tokens_token ON device_tokens(expo_push_token);
+
+-- Per-User Notification Preferences
+CREATE TABLE IF NOT EXISTS notification_preferences (
+  user_id UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  master_enabled BOOLEAN DEFAULT TRUE,
+  milestones BOOLEAN DEFAULT TRUE,
+  performance BOOLEAN DEFAULT TRUE,
+  expiration BOOLEAN DEFAULT TRUE,
+  qr_activity BOOLEAN DEFAULT TRUE,
+  updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Sent Notification History
+CREATE TABLE IF NOT EXISTS notification_history (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  type VARCHAR(20) NOT NULL,
+  title VARCHAR(255) NOT NULL,
+  body TEXT NOT NULL,
+  data JSONB,
+  created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_notification_history_user_id ON notification_history(user_id, created_at DESC);
+
+-- Click Milestone dedupe (one notification per link per milestone, forever)
+CREATE TABLE IF NOT EXISTS link_milestones (
+  link_id UUID NOT NULL REFERENCES links(id) ON DELETE CASCADE,
+  milestone INTEGER NOT NULL,
+  notified_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (link_id, milestone)
+);
+
+-- Performance notification dedupe (once per link per day)
+CREATE TABLE IF NOT EXISTS link_performance_notifications (
+  link_id UUID NOT NULL REFERENCES links(id) ON DELETE CASCADE,
+  day DATE NOT NULL,
+  notified_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (link_id, day)
+);
+
+-- Expiration reminder dedupe (once per link per expiry timestamp)
+CREATE TABLE IF NOT EXISTS link_expiration_notifications (
+  link_id UUID NOT NULL REFERENCES links(id) ON DELETE CASCADE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  notified_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (link_id, expires_at)
+);
+
+-- Daily click aggregates (powers performance notifications; one row per link per day)
+CREATE TABLE IF NOT EXISTS link_daily_clicks (
+  link_id UUID NOT NULL REFERENCES links(id) ON DELETE CASCADE,
+  day DATE NOT NULL,
+  clicks INTEGER DEFAULT 0,
+  PRIMARY KEY (link_id, day)
+);
 `;
 async function runMigrations() {
     try {

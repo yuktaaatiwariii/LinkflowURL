@@ -3,11 +3,13 @@ import {
   View,
   Text,
   ScrollView,
-  SafeAreaView,
   StatusBar,
   TouchableOpacity,
   Platform,
+  Image,
+  ViewStyle,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Colors } from '../../src/constants/colors';
 import {
@@ -18,6 +20,7 @@ import {
   GradientText,
 } from '../../src/components';
 import { useIsDesktop, useIsMobile } from '../../src/hooks/useBreakpoint';
+import { MobileLanding } from '../../src/components/landing/MobileLanding';
 
 export default function WelcomeScreen() {
   const router = useRouter();
@@ -38,12 +41,16 @@ export default function WelcomeScreen() {
   const navItems = [
     { id: 'features', label: 'Features' },
     { id: 'benefits', label: 'Benefits' },
-    { id: 'how-it-works', label: 'How It Works' },
-    { id: 'faq', label: 'FAQ' },
   ];
 
+  // Phones and tablets get the dedicated mobile-first landing experience.
+  // The desktop layout below is intentionally preserved unchanged.
+  if (!isDesktop) {
+    return <MobileLanding />;
+  }
+
   return (
-    <SafeAreaView style={styles.safeArea as ViewStyle}>
+    <SafeAreaView style={styles.safeArea as ViewStyle} edges={['top', 'bottom']}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
 
       {/* Navigation */}
@@ -99,7 +106,7 @@ export default function WelcomeScreen() {
         </View>
       )}
 
-      {/* Mobile Menu Overlay */}
+       {/* Mobile Menu Overlay */}
       {isMobile && mobileMenuOpen && (
         <TouchableOpacity
           style={styles.backdropPlaceholder}
@@ -146,190 +153,157 @@ export default function WelcomeScreen() {
         contentContainerStyle={[styles.scrollContent, { alignItems: 'center' }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* Hero Section */}
-        <View style={styles.heroSection} id="hero">
-          {isDesktop ? (
-            <View style={styles.heroDesktop}>
-              {/* Left Column */}
-              <View style={styles.heroLeft}>
-                <View style={styles.badgePill}>
-                  <AppIcon name="sparkles" size={14} color={Colors.accent} />
-                  <Text style={styles.badgeText}>Next-Gen URL & QR Engine</Text>
-                </View>
+ {/* Hero Section */}
+<View style={styles.heroSection} id="hero">
+  {/* Layer 0: Full-size background image */}
+  <Image
+    source={require('../../assets/img.png')}
+    style={styles.heroBgImage}
+    resizeMode="cover"
+  />
+  {/* Layer 0.5: Subtle dark overlay for readability */}
+  <View style={styles.heroBgOverlay} />
+  <View pointerEvents="none" style={styles.heroBackgroundGlow} />
+  <View pointerEvents="none" style={styles.heroBackgroundGlowSecondary} />
 
-                <View style={styles.heroHeadingWrapper}>
-                  <Text style={[styles.heroKicker, { fontSize: isDesktop ? 56 : 32, lineHeight: isDesktop ? 64 : 40 }] as any}>
-                    Shorten Links.
-                  </Text>
-                  <GradientText style={[styles.heroGradient, { fontSize: isDesktop ? 56 : 32, lineHeight: isDesktop ? 64 : 40 }] as any}>
-                    Create QR Codes.
-                  </GradientText>
-                  <Text style={[styles.heroKicker, { fontSize: isDesktop ? 56 : 32, lineHeight: isDesktop ? 64 : 40 }] as any}>
-                    Share Smarter.
-                  </Text>
-                </View>
-
-                <Text style={[styles.heroDescription, { fontSize: isDesktop ? 16 : 15, maxWidth: isDesktop ? 480 : '100%', textAlign: isDesktop ? 'left' : 'center' }] as any}>
-                  Turn long URLs into clean, shareable short links and beautiful QR
-                  codes. Manage everything in one place with LinkFlow URL.
-                </Text>
-
-                <View style={[styles.heroActions, { marginBottom: isDesktop ? 0 : 40 }] as any}>
-                  <CustomButton
-                    title="Get Started Free"
-                    size="lg"
-                    variant="primary"
-                    gradient
-                    onPress={() => router.push('/(auth)/sign-up' as any)}
-                  />
-                  <CustomButton
-                    title="Learn More"
-                    size="lg"
-                    variant="outline"
-                    onPress={() => scrollToSection('features')}
-                  />
-                </View>
-              </View>
-
-              {/* Right Column - Product Illustration */}
-              <View style={styles.heroRight}>
-                <View style={styles.phoneMockup}>
-                  <View style={styles.phoneHeader}>
-                    <AppIcon name="link" size={16} color={Colors.accentLight} />
-                    <Text style={styles.phoneBrand}>LinkFlow URL</Text>
-                  </View>
-
-                  <View style={styles.phoneBody}>
-                    <View style={styles.urlInputRow}>
-                      <View style={styles.urlInput}>
-                        <Text style={styles.urlInputText}>
-                          https://your-long-link.com
-                        </Text>
-                      </View>
-                      <TouchableOpacity style={styles.shortenBtn}>
-                        <Text style={styles.shortenBtnText}>Shorten</Text>
-                      </TouchableOpacity>
-                    </View>
-
-                    <View style={styles.resultCard}>
-                      <View style={styles.resultRow}>
-                        <Text style={styles.resultShortUrl}>
-                          linkflow.app/abc123
-                        </Text>
-                        <TouchableOpacity style={styles.copyBtn}>
-                          <AppIcon name="copy" size={16} color={Colors.textSecondary} />
-                        </TouchableOpacity>
-                      </View>
-                    </View>
-
-                    <View style={styles.qrPreview}>
-                      <AppIcon name="qr" size={80} color={Colors.accentLight} />
-                    </View>
-                  </View>
-
-                  <View style={styles.phoneGlow}></View>
-                </View>
-
-                <View style={styles.qrCodeLarge}>
-                  <AppIcon name="qr" size={100} color={Colors.accentLight} />
-                  <View style={styles.qrCodeGlow}></View>
-                </View>
-              </View>
-            </View>
-          ) : (
-            <View style={styles.heroMobile}>
-              <View style={styles.badgePill}>
-                <AppIcon name="sparkles" size={14} color={Colors.accent} />
-                <Text style={styles.badgeText}>Next-Gen URL & QR Engine</Text>
-              </View>
-
-              <View style={styles.heroHeadingWrapper}>
-                <Text style={[styles.heroKicker, { fontSize: isDesktop ? 56 : 32, lineHeight: isDesktop ? 64 : 40 }] as any}>
-                  Shorten Links.
-                </Text>
-                <GradientText style={[styles.heroGradient, { fontSize: isDesktop ? 56 : 32, lineHeight: isDesktop ? 64 : 40 }] as any}>
-                  Create QR Codes.
-                </GradientText>
-                <Text style={[styles.heroKicker, { fontSize: isDesktop ? 56 : 32, lineHeight: isDesktop ? 64 : 40 }] as any}>
-                  Share Smarter.
-                </Text>
-              </View>
-
-              <Text style={[styles.heroDescription, { fontSize: isDesktop ? 16 : 15, maxWidth: isDesktop ? 480 : '100%', textAlign: isDesktop ? 'left' : 'center' }] as any}>
-                Turn long URLs into clean, shareable short links and beautiful QR
-                codes. Manage everything in one place with LinkFlow URL.
-              </Text>
-
-              <View style={[styles.heroActions, { marginBottom: isDesktop ? 0 : 40 }] as any}>
-                <CustomButton
-                  title="Get Started Free"
-                  size="lg"
-                  variant="primary"
-                  gradient
-                  onPress={() => router.push('/(auth)/sign-up' as any)}
-                  fullWidth
-                />
-                <CustomButton
-                  title="Learn More"
-                  size="lg"
-                  variant="outline"
-                  onPress={() => scrollToSection('features')}
-                  fullWidth
-                />
-              </View>
-
-              <View style={styles.phoneMockupMobile}>
-                <View style={styles.phoneHeader}>
-                  <AppIcon name="link" size={16} color={Colors.accentLight} />
-                  <Text style={styles.phoneBrand}>LinkFlow URL</Text>
-                </View>
-
-                <View style={styles.phoneBody}>
-                  <View style={styles.urlInputRow}>
-                    <View style={styles.urlInput}>
-                      <Text style={styles.urlInputText}>
-                        https://your-long-link.com
-                      </Text>
-                    </View>
-                    <TouchableOpacity style={styles.shortenBtn}>
-                      <Text style={styles.shortenBtnText}>Shorten</Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.resultCard}>
-                    <View style={styles.resultRow}>
-                      <Text style={styles.resultShortUrl}>
-                        linkflow.app/abc123
-                      </Text>
-                      <TouchableOpacity style={styles.copyBtn}>
-                        <AppIcon name="copy" size={16} color={Colors.textSecondary} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-
-                  <View style={styles.qrPreview}>
-                    <AppIcon name="qr" size={60} color={Colors.accentLight} />
-                  </View>
-                </View>
-
-                <View style={styles.phoneGlow}></View>
-              </View>
-            </View>
-          )}
+  {isDesktop ? (
+    <View style={styles.heroDesktop}>
+      {/* Left Column */}
+      <View style={styles.heroLeft}>
+        <View style={styles.badgePill}>
+          <AppIcon name="sparkles" size={14} color={Colors.accent} />
+          <Text style={styles.badgeText}>
+            Next-Gen URL & QR Engine
+          </Text>
         </View>
+
+        <View style={styles.heroHeadingWrapper}>
+          <Text style={[styles.heroKicker, {
+            fontSize: 68,
+            lineHeight: 76,
+          }]}>
+            Shorten Links.
+          </Text>
+
+          <GradientText style={[styles.heroGradient, {
+            fontSize: 68,
+            lineHeight: 76,
+          }] as any}>
+            Create QR Codes.
+          </GradientText>
+
+          <Text style={[styles.heroKicker, {
+            fontSize: 68,
+            lineHeight: 76,
+          }] as any}>
+            Share Smarter.
+          </Text>
+        </View>
+
+        <Text style={[styles.heroDescription, {
+          fontSize: 19,
+          lineHeight: 31,
+          maxWidth: 540,
+          textAlign: 'left',
+        }]}>
+          Turn long URLs into clean, shareable short links and beautiful QR
+          codes. Manage everything in one place with LinkFlow URL.
+        </Text>
+
+        <View style={styles.heroActions}>
+          <CustomButton
+            title="Get Started Free"
+            size="lg"
+            variant="primary"
+            gradient
+            onPress={() => router.push('/(auth)/sign-up' as any)}
+          />
+
+          <CustomButton
+            title="Learn More"
+            size="lg"
+            variant="outline"
+            onPress={() => scrollToSection('features')}
+          />
+        </View>
+      </View>
+    </View>
+  ) : (
+    <View style={styles.heroMobileContent}>
+      <View style={styles.badgePill}>
+        <AppIcon name="sparkles" size={14} color={Colors.accent} />
+        <Text style={styles.badgeText}>
+          Next-Gen URL & QR Engine
+        </Text>
+      </View>
+
+      <View style={styles.heroHeadingWrapper}>
+        <Text style={[styles.heroKicker, {
+          fontSize: 38,
+          lineHeight: 46,
+        }]}>
+          Shorten Links.
+        </Text>
+
+        <GradientText style={[styles.heroGradient, {
+          fontSize: 38,
+          lineHeight: 46,
+        }] as any}>
+          Create QR Codes.
+        </GradientText>
+
+        <Text style={[styles.heroKicker, {
+          fontSize: 38,
+          lineHeight: 46,
+        }] as any}>
+          Share Smarter.
+        </Text>
+      </View>
+
+      <Text style={[styles.heroDescription, {
+        fontSize: 16,
+        lineHeight: 26,
+        textAlign: 'center',
+      }]}>
+        Turn long URLs into clean, shareable short links and beautiful QR
+        codes. Manage everything in one place with LinkFlow URL.
+      </Text>
+
+      <View style={styles.heroActions}>
+        <CustomButton
+          title="Get Started Free"
+          size="lg"
+          variant="primary"
+          gradient
+          onPress={() => router.push('/(auth)/sign-up' as any)}
+          fullWidth
+        />
+
+        <CustomButton
+          title="Learn More"
+          size="lg"
+          variant="outline"
+          onPress={() => scrollToSection('features')}
+          fullWidth
+        />
+      </View>
+
+    </View>
+  )}
+</View>
 
         {/* Features Section */}
         <View style={styles.featuresSection} id="features">
-          <Section title="Powerful Features" titleBottom={8}>
+          <Section >
             <Text style={styles.sectionHeading}>
-              Everything You Need to Manage Links
+              Everything You Need to <Text style={styles.sectionHeadingAccent}>Manage Links</Text>
             </Text>
             <Text style={styles.sectionSubtitle}>
               Simple. Fast. Feature-rich.
             </Text>
           </Section>
 
-          <View style={styles.featuresGrid}>
+          <View style={[styles.featuresGrid, isDesktop && styles.featuresGridDesktop]}>
             <Card style={styles.featureCard} variant="elevated">
               <View style={styles.featureIcon}>
                 <AppIcon name="link" size={28} color={Colors.accentLight} />
@@ -350,7 +324,7 @@ export default function WelcomeScreen() {
               </Text>
             </Card>
 
-            <Card style={styles.featureCard} variant="elevated">
+          <Card style={styles.featureCard} variant="elevated">
               <View style={styles.featureIcon}>
                 <AppIcon name="chart" size={28} color={Colors.accentLight} />
               </View>
@@ -364,65 +338,17 @@ export default function WelcomeScreen() {
 
         {/* Benefits Section */}
         <View style={styles.benefitsSection} id="benefits">
+          {/* Layer 0: Full-size background image */}
+          <Image
+            source={require('../../assets/left.png')}
+            style={styles.benefitsBgImage}
+            resizeMode="cover"
+          />
+          {/* Layer 0.5: Subtle dark overlay for readability */}
+          <View style={styles.benefitsBgOverlay} />
+
           {isDesktop ? (
             <View style={styles.benefitsDesktop}>
-              {/* Left: Illustration */}
-              <View style={styles.benefitsIllustration}>
-                <View style={styles.dashboardMockup}>
-                  <View style={styles.dashboardHeader}>
-                    <AppIcon name="link" size={16} color={Colors.accentLight} />
-                    <Text style={styles.dashboardTitle}>Your Links</Text>
-                    <TouchableOpacity style={styles.newLinkBtn}>
-                      <AppIcon name="plus" size={14} color={Colors.textPrimary} />
-                      <Text style={styles.newLinkBtnText}>New Link</Text>
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.dashboardList}>
-                    <View style={styles.dashboardRow}>
-                      <AppIcon name="link" size={14} color={Colors.textMuted} />
-                      <Text style={styles.dashboardShortUrl}>
-                        linkflow.app/abc123
-                      </Text>
-                      <Text style={styles.dashboardClicks}>2.5k clicks</Text>
-                      <TouchableOpacity style={styles.dashboardMore}>
-                        <AppIcon name="external" size={14} color={Colors.textMuted} />
-                      </TouchableOpacity>
-                    </View>
-                    <View style={styles.dashboardRow}>
-                      <AppIcon name="link" size={14} color={Colors.textMuted} />
-                      <Text style={styles.dashboardShortUrl}>
-                        linkflow.app/xyz789
-                      </Text>
-                      <Text style={styles.dashboardClicks}>1.2k clicks</Text>
-                      <TouchableOpacity style={styles.dashboardMore}>
-                        <AppIcon name="external" size={14} color={Colors.textMuted} />
-                      </TouchableOpacity>
-                    </View>
-                    <View style={styles.dashboardRow}>
-                      <AppIcon name="link" size={14} color={Colors.textMuted} />
-                      <Text style={styles.dashboardShortUrl}>
-                        linkflow.app/qwe456
-                      </Text>
-                      <Text style={styles.dashboardClicks}>842 clicks</Text>
-                      <TouchableOpacity style={styles.dashboardMore}>
-                        <AppIcon name="external" size={14} color={Colors.textMuted} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-
-                  <View style={styles.analyticsCard}>
-                    <View style={styles.analyticsSparkline}></View>
-                    <View style={styles.analyticsInfo}>
-                      <Text style={styles.analyticsLabel}>Total Clicks</Text>
-                      <Text style={styles.analyticsValue}>4.5k</Text>
-                      <Text style={styles.analyticsChange}>↑ 12%</Text>
-                    </View>
-                  </View>
-                </View>
-              </View>
-
-              {/* Right: Content */}
               <View style={styles.benefitsContent}>
                 <Text style={styles.benefitsKicker}>Why Choose LinkFlow?</Text>
                 <Text style={styles.benefitsHeading}>
@@ -434,22 +360,42 @@ export default function WelcomeScreen() {
                 </Text>
 
                 <View style={styles.benefitsList}>
-                  <View style={styles.benefitItem}>
-                    <AppIcon name="check" size={18} color={Colors.success} />
-                    <Text style={styles.benefitText}>Instant Link Shortening</Text>
-                  </View>
-                  <View style={styles.benefitItem}>
-                    <AppIcon name="check" size={18} color={Colors.success} />
-                    <Text style={styles.benefitText}>Custom QR Codes</Text>
-                  </View>
-                  <View style={styles.benefitItem}>
-                    <AppIcon name="check" size={18} color={Colors.success} />
-                    <Text style={styles.benefitText}>Real-time Analytics</Text>
-                  </View>
-                  <View style={styles.benefitItem}>
-                    <AppIcon name="check" size={18} color={Colors.success} />
-                    <Text style={styles.benefitText}>Easy Link Management</Text>
-                  </View>
+                  <TouchableOpacity
+                    style={[styles.benefitItem, styles.benefitItemHover]}
+                    activeOpacity={0.8}
+                  >
+                    <AppIcon name="check" size={18} color={Colors.accent} />
+                    <Text style={[styles.benefitText, styles.benefitTextHover]}>
+                      Instant Link Shortening
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.benefitItem, styles.benefitItemHover]}
+                    activeOpacity={0.8}
+                  >
+                    <AppIcon name="check" size={18} color={Colors.accent} />
+                    <Text style={[styles.benefitText, styles.benefitTextHover]}>
+                      Custom QR Codes
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.benefitItem, styles.benefitItemHover]}
+                    activeOpacity={0.8}
+                  >
+                    <AppIcon name="check" size={18} color={Colors.accent} />
+                    <Text style={[styles.benefitText, styles.benefitTextHover]}>
+                      Real-time Analytics
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.benefitItem, styles.benefitItemHover]}
+                    activeOpacity={0.8}
+                  >
+                    <AppIcon name="check" size={18} color={Colors.accent} />
+                    <Text style={[styles.benefitText, styles.benefitTextHover]}>
+                      Easy Link Management
+                    </Text>
+                  </TouchableOpacity>
                 </View>
               </View>
             </View>
@@ -465,47 +411,42 @@ export default function WelcomeScreen() {
               </Text>
 
               <View style={styles.benefitsList}>
-                <View style={styles.benefitItem}>
-                  <AppIcon name="check" size={18} color={Colors.success} />
-                  <Text style={styles.benefitText}>Instant Link Shortening</Text>
-                </View>
-                <View style={styles.benefitItem}>
-                  <AppIcon name="check" size={18} color={Colors.success} />
-                  <Text style={styles.benefitText}>Custom QR Codes</Text>
-                </View>
-                <View style={styles.benefitItem}>
-                  <AppIcon name="check" size={18} color={Colors.success} />
-                  <Text style={styles.benefitText}>Real-time Analytics</Text>
-                </View>
-                <View style={styles.benefitItem}>
-                  <AppIcon name="check" size={18} color={Colors.success} />
-                  <Text style={styles.benefitText}>Easy Link Management</Text>
-                </View>
-              </View>
-
-              <View style={styles.benefitsIllustrationMobile}>
-                <View style={styles.dashboardMockupMobile}>
-                  <View style={styles.dashboardHeader}>
-                    <AppIcon name="link" size={16} color={Colors.accentLight} />
-                    <Text style={styles.dashboardTitle}>Your Links</Text>
-                  </View>
-                  <View style={styles.dashboardList}>
-                    <View style={styles.dashboardRow}>
-                      <AppIcon name="link" size={14} color={Colors.textMuted} />
-                      <Text style={styles.dashboardShortUrl}>
-                        linkflow.app/abc123
-                      </Text>
-                      <Text style={styles.dashboardClicks}>2.5k clicks</Text>
-                    </View>
-                    <View style={styles.dashboardRow}>
-                      <AppIcon name="link" size={14} color={Colors.textMuted} />
-                      <Text style={styles.dashboardShortUrl}>
-                        linkflow.app/xyz789
-                      </Text>
-                      <Text style={styles.dashboardClicks}>1.2k clicks</Text>
-                    </View>
-                  </View>
-                </View>
+                <TouchableOpacity
+                  style={[styles.benefitItem, styles.benefitItemHover]}
+                  activeOpacity={0.8}
+                >
+                  <AppIcon name="check" size={18} color={Colors.accent} />
+                  <Text style={[styles.benefitText, styles.benefitTextHover]}>
+                    Instant Link Shortening
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.benefitItem, styles.benefitItemHover]}
+                  activeOpacity={0.8}
+                >
+                  <AppIcon name="check" size={18} color={Colors.accent} />
+                  <Text style={[styles.benefitText, styles.benefitTextHover]}>
+                    Custom QR Codes
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.benefitItem, styles.benefitItemHover]}
+                  activeOpacity={0.8}
+                >
+                  <AppIcon name="check" size={18} color={Colors.accent} />
+                  <Text style={[styles.benefitText, styles.benefitTextHover]}>
+                    Real-time Analytics
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.benefitItem, styles.benefitItemHover]}
+                  activeOpacity={0.8}
+                >
+                  <AppIcon name="check" size={18} color={Colors.accent} />
+                  <Text style={[styles.benefitText, styles.benefitTextHover]}>
+                    Easy Link Management
+                  </Text>
+                </TouchableOpacity>
               </View>
             </View>
           )}
@@ -513,11 +454,13 @@ export default function WelcomeScreen() {
 
         {/* CTA Banner */}
         <View style={styles.ctaBanner}>
-          <View style={styles.ctaContent}>
-            <Text style={styles.ctaHeading}>Start Shortening Today!</Text>
-            <Text style={styles.ctaDesc}>
-              Join thousands of users who trust LinkFlow URL.
-            </Text>
+          <View style={[styles.ctaContent, !isDesktop && styles.ctaContentMobile]}>
+            <View style={styles.ctaTextGroup}>
+              <Text style={styles.ctaHeading}>Start Shortening Today!</Text>
+              <Text style={styles.ctaDesc}>
+                Join thousands of users who trust LinkFlow URL.
+              </Text>
+            </View>
             <CustomButton
               title="Create Free Account"
               size="lg"
@@ -528,122 +471,26 @@ export default function WelcomeScreen() {
           </View>
         </View>
 
-        {/* FAQ Section */}
-        <View style={styles.faqSection} id="faq">
-          <Section title="Frequently Asked Questions" titleBottom={16}>
-            <Text style={styles.faqSubtitle}>
-              Everything you need to know about LinkFlow URL
-            </Text>
-          </Section>
-
-          <View style={styles.faqList}>
-            <View style={styles.faqItem}>
-              <TouchableOpacity style={styles.faqQuestion} onPress={() => {}}>
-                <Text style={styles.faqQuestionText}>What is LinkFlow URL?</Text>
-                <AppIcon name="arrow-right" size={16} color={Colors.accent} />
-              </TouchableOpacity>
-              <Text style={styles.faqAnswer}>
-                LinkFlow URL is a modern URL shortener and QR code generator
-                that helps you create clean, shareable links and track their
-                performance.
-              </Text>
-            </View>
-
-            <View style={styles.faqItem}>
-              <TouchableOpacity style={styles.faqQuestion} onPress={() => {}}>
-                <Text style={styles.faqQuestionText}>How do I shorten a URL?</Text>
-                <AppIcon name="arrow-right" size={16} color={Colors.accent} />
-              </TouchableOpacity>
-              <Text style={styles.faqAnswer}>
-                Simply paste your long URL into the input field, click Shorten,
-                and share your new short link instantly.
-              </Text>
-            </View>
-
-            <View style={styles.faqItem}>
-              <TouchableOpacity style={styles.faqQuestion} onPress={() => {}}>
-                <Text style={styles.faqQuestionText}>Can I generate QR codes?</Text>
-                <AppIcon name="arrow-right" size={16} color={Colors.accent} />
-              </TouchableOpacity>
-              <Text style={styles.faqAnswer}>
-                Yes! Every short link you create automatically gets a scannable
-                QR code that you can download and share.
-              </Text>
-            </View>
-
-            <View style={styles.faqItem}>
-              <TouchableOpacity style={styles.faqQuestion} onPress={() => {}}>
-                <Text style={styles.faqQuestionText}>Can I track link clicks?</Text>
-                <AppIcon name="arrow-right" size={16} color={Colors.accent} />
-              </TouchableOpacity>
-              <Text style={styles.faqAnswer}>
-                Yes. Our dashboard shows real-time click analytics for every
-                link you create.
-              </Text>
-            </View>
-
-            <View style={styles.faqItem}>
-              <TouchableOpacity style={styles.faqQuestion} onPress={() => {}}>
-                <Text style={styles.faqQuestionText}>Do I need an account?</Text>
-                <AppIcon name="arrow-right" size={16} color={Colors.accent} />
-              </TouchableOpacity>
-              <Text style={styles.faqAnswer}>
-                You can create short links without an account, but signing up
-                lets you manage all your links in one dashboard.
-              </Text>
-            </View>
-
-            <View style={styles.faqItem}>
-              <TouchableOpacity style={styles.faqQuestion} onPress={() => {}}>
-                <Text style={styles.faqQuestionText}>Are my links private?</Text>
-                <AppIcon name="arrow-right" size={16} color={Colors.accent} />
-              </TouchableOpacity>
-              <Text style={styles.faqAnswer}>
-                All links are associated with your account and only accessible
-                to you through your dashboard.
-              </Text>
-            </View>
-
-            <View style={styles.faqItem}>
-              <TouchableOpacity style={styles.faqQuestion} onPress={() => {}}>
-                <Text style={styles.faqQuestionText}>Can I delete my links?</Text>
-                <AppIcon name="arrow-right" size={16} color={Colors.accent} />
-              </TouchableOpacity>
-              <Text style={styles.faqAnswer}>
-                Yes, you can delete any link from your dashboard at any time.
-              </Text>
-            </View>
-          </View>
-        </View>
-
         {/* Footer */}
         <View style={styles.footer}>
-          <View style={styles.footerContent}>
+          <View style={[styles.footerContent, !isDesktop && styles.footerContentMobile]}>
             <View style={styles.footerBrand}>
               <AppIcon name="link" size={20} color={Colors.accentLight} />
               <Text style={styles.footerBrandText}>LinkFlow URL</Text>
               <Text style={styles.footerTagline}>Shorten. Share. Grow.</Text>
             </View>
 
-            <View style={styles.footerLinks}>
+  <View style={styles.footerLinks}>
               <View style={styles.footerLinkGroup}>
-                <Text style={styles.footerLinkTitle}>Product</Text>
-                <TouchableOpacity style={styles.footerLinkItem} onPress={() => scrollToSection('features')}>
+                        <TouchableOpacity style={styles.footerLinkItem} onPress={() => scrollToSection('features')}>
                   <Text style={styles.footerLinkText}>Features</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.footerLinkItem} onPress={() => scrollToSection('benefits')}>
                   <Text style={styles.footerLinkText}>Benefits</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={styles.footerLinkItem} onPress={() => scrollToSection('how-it-works')}>
-                  <Text style={styles.footerLinkText}>How It Works</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.footerLinkItem} onPress={() => scrollToSection('faq')}>
-                  <Text style={styles.footerLinkText}>FAQ</Text>
-                </TouchableOpacity>
               </View>
 
               <View style={styles.footerLinkGroup}>
-                <Text style={styles.footerLinkTitle}>Legal</Text>
                 <TouchableOpacity style={styles.footerLinkItem} onPress={() => router.push('/(auth)/sign-in' as any)}>
                   <Text style={styles.footerLinkText}>Privacy</Text>
                 </TouchableOpacity>
@@ -745,8 +592,9 @@ const styles: any = {
   },
   mobileMenuBtn: {
     padding: 8,
-  },
-
+  }, 
+  
+  
   mobileMenuOverlay: {
     position: 'absolute',
     top: 0,
@@ -765,6 +613,7 @@ const styles: any = {
     right: 24,
     padding: 8,
   },
+
   mobileMenuItems: {
     marginTop: 40,
     gap: 16,
@@ -783,78 +632,113 @@ const styles: any = {
   },
 
   /* Hero */
-  scrollContent: {
-    paddingBottom: 40,
-  },
-  heroSection: {
-    width: '100%',
-    paddingHorizontal: 40,
-    paddingTop: 20,
-    paddingBottom: 80,
-  },
-  heroDesktop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 60,
-    maxWidth: 1200,
-    alignSelf: 'center',
-  },
-  heroLeft: {
-    flex: 1,
-    maxWidth: 520,
-  },
-  heroRight: {
-    flex: 1,
-    maxWidth: 500,
-    position: 'relative',
-  },
-  heroMobile: {
-    width: '100%',
-    alignItems: 'center',
-    gap: 24,
-  },
-  badgePill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.surfaceSecondary,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 20,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    gap: 8,
-    marginBottom: 24,
-  },
-  badgeText: {
-    color: Colors.accentLight,
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  heroHeadingWrapper: {
-    marginBottom: 20,
-  },
-  heroKicker: {
-    fontWeight: '800',
-    color: Colors.textPrimary,
-    marginBottom: 8,
-  },
-  heroGradient: {
-    color: Colors.accent,
-  },
-  heroDescription: {
-    fontSize: 15,
-    color: Colors.textSecondary,
-    lineHeight: 26,
-    marginBottom: 32,
-    textAlign: 'center',
-  },
-  heroActions: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 40,
-  },
+heroSection: {
+  position: 'relative',
+  width: '100%',
+  maxWidth: 1600,
+  minHeight: 650,
+  paddingHorizontal: 64,
+  paddingTop: 56,
+  paddingBottom: 88,
+  alignSelf: 'center',
+  justifyContent: 'center',
+  backgroundColor: '#090414',
+  overflow: 'hidden',
+},
+
+heroBackgroundGlow: {
+  position: 'absolute',
+  width: 620,
+  height: 620,
+  borderRadius: 310,
+  right: '8%',
+  top: 10,
+  backgroundColor: '#3B0764',
+  opacity: 0.22,
+},
+
+heroBackgroundGlowSecondary: {
+  position: 'absolute',
+  width: 460,
+  height: 460,
+  borderRadius: 230,
+  left: '-12%',
+  bottom: -240,
+  backgroundColor: '#581C87',
+  opacity: 0.16,
+},
+
+heroBgImage: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  width: '100%',
+  height: '100%',
+  zIndex: 0,
+},
+
+heroBgOverlay: {
+  position: 'absolute',
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  backgroundColor: 'rgba(9, 5, 20, 0.35)',
+  zIndex: 5,
+},
+
+heroDesktop: {
+  width: '100%',
+  maxWidth: 1360,
+  minHeight: 500,
+  alignSelf: 'center',
+},
+
+heroLeft: {
+  flex: 1.08,
+  maxWidth: 690,
+  zIndex: 10,
+},
+
+heroMobileContent: {
+  width: '100%',
+  alignItems: 'center',
+  gap: 24,
+  paddingHorizontal: 4,
+  zIndex: 10,
+},
+
+heroKicker: {
+  fontWeight: '900',
+  color: '#FFFFFF',
+  marginBottom: 4,
+  letterSpacing: -1.8,
+},
+
+heroGradient: {
+  color: Colors.accent,
+  fontWeight: '900',
+  letterSpacing: -1.8,
+},
+
+heroDescription: {
+  fontSize: 19,
+  color: '#D6CBEA',
+  lineHeight: 31,
+  marginBottom: 34,
+  textAlign: 'left',
+},
+
+heroActions: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 18,
+  marginBottom: 40,
+  marginTop: 2,
+},
+  
 
   /* Phone Mockup */
   phoneMockup: {
@@ -953,7 +837,7 @@ const styles: any = {
     right: -60,
     alignItems: 'center',
   },
-  qrCodeGlow: {
+   qrCodeGlow: {
     position: 'absolute',
     top: -20,
     left: -20,
@@ -979,19 +863,50 @@ const styles: any = {
   /* Features */
   featuresSection: {
     width: '100%',
-    paddingHorizontal: 40,
-    paddingBottom: 80,
+    maxWidth: 1360,
+    paddingHorizontal: 92,
+    paddingBottom: 92,
     alignItems: 'center',
+    alignSelf: 'center',
+    borderWidth: 1,
+    padding:40,
+    borderBottomColor: Colors.border,
   },
   featuresGrid: {
     flexDirection: 'column',
     gap: 16,
     width: '100%',
   },
+  featuresGridDesktop: {
+    flexDirection: 'row',
+    gap: 18,
+  },
+  sectionHeading: {
+    padding:20,
+    fontSize: 28,
+    lineHeight: 36,
+    fontWeight: '800',
+    color: Colors.textPrimary,
+    textAlign: 'center',
+  
+  },
+  sectionHeadingAccent: {
+    color: Colors.accentLight,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginBottom: 28,
+  },
   featureCard: {
     flex: 1,
-    padding: 24,
-    minHeight: 200,
+    padding: 22,
+    minHeight: 178,
+    backgroundColor: Colors.surfaceCard,
+    borderColor: Colors.border,
+    borderWidth: 1,
+    borderRadius: 18,
   },
   featureIcon: {
     width: 48,
@@ -1010,7 +925,8 @@ const styles: any = {
     color: Colors.textPrimary,
     marginBottom: 8,
   },
-  featureDesc: {
+
+    featureDesc: {
     fontSize: 14,
     color: Colors.textSecondary,
     lineHeight: 22,
@@ -1019,25 +935,47 @@ const styles: any = {
   /* Benefits */
   benefitsSection: {
     width: '100%',
-    paddingHorizontal: 40,
-    paddingBottom: 80,
-    alignItems: 'center',
+    paddingHorizontal: 48,
+    paddingBottom: 90,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  benefitsBgImage: {
+    position: 'absolute',
+    top: 0,
+    
+    left: 60,
+    right: 0,
+    bottom: 0,
+    width: '80%',
+    height: '100%',
+    zIndex: 0,
+  },
+  benefitsBgOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(9, 5, 20, 0.4)',
+    zIndex: 5,
   },
   benefitsDesktop: {
+    position: 'relative',
+    zIndex: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 60,
-    maxWidth: 1200,
+    justifyContent: 'flex-end',
+    width: '100%',
+    maxWidth: 1400,
     alignSelf: 'center',
-  },
-  benefitsIllustration: {
-    flex: 1,
-    maxWidth: 480,
+    minHeight: 450,
   },
   benefitsContent: {
-    flex: 1,
-    maxWidth: 500,
+    zIndex: 10,
+    maxWidth: 520,
+    alignSelf: 'flex-end',
+    textAlign: 'left',
   },
   benefitsKicker: {
     fontSize: 13,
@@ -1049,6 +987,7 @@ const styles: any = {
     fontWeight: '800',
     color: Colors.textPrimary,
     marginBottom: 16,
+    lineHeight: 32,
   },
   benefitsDesc: {
     fontSize: 15,
@@ -1063,10 +1002,20 @@ const styles: any = {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
+    paddingVertical: 10,
+  },
+  benefitItemHover: {
+    paddingLeft: 16,
+    paddingRight: 16,
+    borderRadius: 10,
   },
   benefitText: {
     fontSize: 15,
     color: Colors.textSecondary,
+  },
+  benefitTextHover: {
+    color: Colors.textPrimary,
+    fontWeight: '600',
   },
 
   dashboardMockup: {
@@ -1100,7 +1049,7 @@ const styles: any = {
   },
   newLinkBtnText: {
     fontSize: 13,
-    fontWeight: '600',
+      fontWeight: '600',
     color: Colors.textPrimary,
   },
   dashboardList: {
@@ -1164,15 +1113,12 @@ const styles: any = {
   },
 
   benefitsMobile: {
+    position: 'relative',
+    zIndex: 10,
     width: '100%',
     maxWidth: 400,
     alignItems: 'center',
     textAlign: 'center',
-  },
-  benefitsIllustrationMobile: {
-    marginTop: 40,
-    width: '100%',
-    maxWidth: 300,
   },
   dashboardMockupMobile: {
     backgroundColor: Colors.surfaceCard,
@@ -1187,21 +1133,32 @@ const styles: any = {
   /* CTA Banner */
   ctaBanner: {
     width: '100%',
-    paddingHorizontal: 40,
-    paddingVertical: 60,
+    maxWidth: 1280,
+    paddingHorizontal: 36,
+    paddingVertical: 26,
     backgroundColor: Colors.primary,
-    borderRadius: 24,
-    marginBottom: 80,
+    borderRadius: 18,
+      marginBottom: 64,
     alignSelf: 'center',
   },
   ctaContent: {
-    flexDirection: 'column',
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: 32,
-    maxWidth: 900,
+    gap: 24,
+    maxWidth: 1160,
+    width: '100%',
     alignSelf: 'center',
+  },
+  ctaTextGroup: {
+    flex: 1,
+    gap: 6,
+  },
+  ctaContentMobile: {
+    flexDirection: 'column',
+    alignItems: 'center',
     textAlign: 'center',
+    gap: 10,
   },
   ctaHeading: {
     fontWeight: '800',
@@ -1211,73 +1168,37 @@ const styles: any = {
   ctaDesc: {
     fontSize: 15,
     color: Colors.accentLight,
-    marginBottom: 24,
-  },
-
-  /* FAQ */
-  faqSection: {
-    width: '100%',
-    paddingHorizontal: 40,
-    paddingBottom: 80,
-    alignItems: 'center',
-  },
-  faqSubtitle: {
-    fontSize: 15,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginBottom: 40,
-    maxWidth: 600,
-  },
-  faqList: {
-    width: '100%',
-    maxWidth: 600,
-    gap: 12,
-    alignSelf: 'center',
-  },
-  faqItem: {
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderRadius: 12,
-    overflow: 'hidden',
-  },
-  faqQuestion: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
-    width: '100%',
-  },
-  faqQuestionText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: Colors.textPrimary,
-  },
-  faqAnswer: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    lineHeight: 22,
+    marginBottom: 0,
   },
 
   /* Footer */
   footer: {
     width: '100%',
     paddingHorizontal: 40,
-    paddingVertical: 40,
+    paddingVertical: 22,
+    backgroundColor: '#080512',
     borderTopWidth: 1,
     borderTopColor: Colors.border,
   },
   footerContent: {
-    maxWidth: 1200,
+    maxWidth: 1280,
+    width: '100%',
     alignSelf: 'center',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 24,
   },
   footerBrand: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    marginBottom: 32,
+    marginBottom: 0,
+    flexShrink: 0,
+  },
+  footerContentMobile: {
+    flexDirection: 'column',
+    gap: 14,
   },
   footerBrandText: {
     fontSize: 18,
@@ -1289,20 +1210,27 @@ const styles: any = {
     color: Colors.textMuted,
   },
   footerLinks: {
+    flexWrap: 'wrap',
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 28,
+    flex: 1,
+    width: 'auto',
     maxWidth: 600,
-    marginBottom: 32,
+    marginBottom: 0,
   },
   footerLinkGroup: {
-    gap: 12,
+    flexWrap: 'wrap',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 18,
   },
   footerLinkTitle: {
     fontSize: 13,
     fontWeight: '700',
     color: Colors.textPrimary,
-    marginBottom: 12,
+    marginBottom: 0,
   },
   footerLinkItem: {
     paddingVertical: 6,
@@ -1313,7 +1241,8 @@ const styles: any = {
   },
   footerSocial: {
     flexDirection: 'row',
-    gap: 16,
+    gap: 10,
+    flexShrink: 0,
   },
   socialItem: {
     padding: 8,

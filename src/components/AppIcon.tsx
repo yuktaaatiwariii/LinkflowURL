@@ -24,7 +24,13 @@ interface IconProps {
     | 'play'
     | 'download'
     | 'menu'
-    | 'x';
+    | 'x'
+    | 'trash'
+    | 'home'
+    | 'zap'
+    | 'clock'
+    | 'bell'
+    | 'send';
   size?: number;
   color?: string;
   style?: ViewStyle;
@@ -682,6 +688,225 @@ export const AppIcon: React.FC<IconProps> = ({
                 borderWidth: stroke,
                 borderColor: color,
                 borderBottomWidth: 0,
+              }}
+            />
+          </View>
+        );
+
+      case 'trash':
+        return (
+          <View style={[styles.center, { width: s, height: s }]}>
+            <View
+              style={{
+                position: 'absolute',
+                width: s * 0.7,
+                height: stroke,
+                backgroundColor: color,
+                top: s * 0.3,
+                borderRadius: stroke / 2,
+              }}
+            />
+            <View
+              style={{
+                position: 'absolute',
+                width: s * 0.6,
+                height: s * 0.5,
+                borderWidth: stroke,
+                borderColor: color,
+                borderBottomWidth: 0,
+                borderTopLeftRadius: s * 0.1,
+                borderTopRightRadius: s * 0.1,
+                top: s * 0.35,
+                left: s * 0.2,
+              }}
+            />
+            <View
+              style={{
+                position: 'absolute',
+                width: s * 0.2,
+                height: s * 0.3,
+                backgroundColor: color,
+                top: s * 0.3,
+                left: s * 0.25,
+              }}
+            />
+            <View
+              style={{
+                position: 'absolute',
+                width: s * 0.2,
+                height: s * 0.3,
+                backgroundColor: color,
+                top: s * 0.3,
+                left: s * 0.55,
+              }}
+            />
+          </View>
+        );
+
+      case 'home':
+        return (
+          <View style={[styles.center, { width: s, height: s }]}>
+            <View
+              style={{
+                position: 'absolute',
+                top: s * 0.06,
+                width: s * 0.5,
+                height: s * 0.5,
+                borderLeftWidth: stroke,
+                borderTopWidth: stroke,
+                borderColor: color,
+                borderTopLeftRadius: 2,
+                transform: [{ rotate: '45deg' }],
+              }}
+            />
+            <View
+              style={{
+                position: 'absolute',
+                bottom: s * 0.1,
+                width: s * 0.58,
+                height: s * 0.42,
+                borderWidth: stroke,
+                borderTopWidth: 0,
+                borderColor: color,
+                borderBottomLeftRadius: 3,
+                borderBottomRightRadius: 3,
+              }}
+            />
+          </View>
+        );
+
+      case 'zap':
+        return (
+          <View style={[styles.center, { width: s, height: s }]}>
+            <View
+              style={{
+                position: 'absolute',
+                left: s * 0.34,
+                top: s * 0.06,
+                width: s * 0.38,
+                height: s * 0.46,
+                backgroundColor: color,
+                borderTopLeftRadius: 2,
+                borderBottomRightRadius: 2,
+                transform: [{ skewX: '-16deg' }],
+              }}
+            />
+            <View
+              style={{
+                position: 'absolute',
+                right: s * 0.3,
+                bottom: s * 0.06,
+                width: s * 0.38,
+                height: s * 0.46,
+                backgroundColor: color,
+                borderTopLeftRadius: 2,
+                borderBottomRightRadius: 2,
+                transform: [{ skewX: '-16deg' }],
+              }}
+            />
+          </View>
+        );
+
+      case 'clock':
+        return (
+          <View
+            style={[
+              styles.center,
+              {
+                width: s * 0.82,
+                height: s * 0.82,
+                borderRadius: (s * 0.82) / 2,
+                borderWidth: stroke,
+                borderColor: color,
+              },
+            ]}
+          >
+            <View
+              style={{
+                position: 'absolute',
+                bottom: (s * 0.82) / 2,
+                width: stroke,
+                height: s * 0.24,
+                backgroundColor: color,
+                borderRadius: stroke / 2,
+              }}
+            />
+            <View
+              style={{
+                position: 'absolute',
+                left: (s * 0.82) / 2,
+                width: s * 0.2,
+                height: stroke,
+                backgroundColor: color,
+                borderRadius: stroke / 2,
+                transform: [{ rotate: '32deg' }],
+              }}
+            />
+          </View>
+        );
+
+      case 'bell':
+        return (
+          <View style={[styles.center, { width: s, height: s }]}>
+            <View
+              style={{
+                width: s * 0.44,
+                height: s * 0.3,
+                borderTopLeftRadius: s * 0.22,
+                borderTopRightRadius: s * 0.22,
+                borderWidth: stroke,
+                borderColor: color,
+                borderBottomWidth: 0,
+              }}
+            />
+            <View
+              style={{
+                width: s * 0.68,
+                height: s * 0.28,
+                borderWidth: stroke,
+                borderColor: color,
+                borderTopWidth: 0,
+                borderBottomLeftRadius: 3,
+                borderBottomRightRadius: 3,
+              }}
+            />
+            <View
+              style={{
+                width: s * 0.18,
+                height: s * 0.14,
+                borderRadius: s * 0.07,
+                backgroundColor: color,
+                marginTop: 1,
+              }}
+            />
+          </View>
+        );
+
+      case 'send':
+        return (
+          <View style={[styles.center, { width: s, height: s }]}>
+            <View
+              style={{
+                width: 0,
+                height: 0,
+                borderStyle: 'solid',
+                borderTopWidth: s * 0.3,
+                borderBottomWidth: s * 0.3,
+                borderLeftWidth: s * 0.68,
+                borderTopColor: 'transparent',
+                borderBottomColor: 'transparent',
+                borderLeftColor: color,
+                transform: [{ translateX: s * 0.06 }],
+              }}
+            />
+            <View
+              style={{
+                position: 'absolute',
+                left: s * 0.28,
+                width: s * 0.26,
+                height: stroke,
+                backgroundColor: 'rgba(255, 255, 255, 0.55)',
+                borderRadius: stroke / 2,
               }}
             />
           </View>

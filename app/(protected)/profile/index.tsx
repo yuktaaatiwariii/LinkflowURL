@@ -4,10 +4,10 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  SafeAreaView,
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAuth, useUser } from '@clerk/expo';
 import { Colors } from '../../../src/constants/colors';
@@ -17,12 +17,14 @@ import {
   LogoutConfirmModal,
 } from '../../../src/components';
 import { useIsDesktop } from '../../../src/hooks/useBreakpoint';
+import { usePushNotifications } from '../../../src/hooks/usePushNotifications';
 
 export default function ProfileScreen() {
   const router = useRouter();
   const { signOut } = useAuth();
   const { user } = useUser();
   const isDesktop = useIsDesktop();
+  const { unregisterFromPushNotifications } = usePushNotifications();
 
   const [loading, setLoading] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState<boolean>(false);
@@ -45,6 +47,8 @@ export default function ProfileScreen() {
     setLogoutError(null);
     setLoading(true);
     try {
+      // Remove this device's push token before the session disappears.
+      await unregisterFromPushNotifications();
       await signOut();
       router.replace('/(auth)/welcome' as any);
     } catch (err: any) {
@@ -63,7 +67,7 @@ export default function ProfileScreen() {
 
   return (
     <>
-      <SafeAreaView style={styles.safeArea}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
@@ -119,6 +123,15 @@ export default function ProfileScreen() {
               >
                 <AppIcon name="qr" size={20} color={Colors.textSecondary} />
                 <Text style={styles.settingsTitle}>QR Codes</Text>
+                <AppIcon name="arrow-left" size={16} color={Colors.textMuted} />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.settingsItem}
+                onPress={() => router.push('/(protected)/notifications' as any)}
+              >
+                <AppIcon name="bell" size={20} color={Colors.textSecondary} />
+                <Text style={styles.settingsTitle}>Notifications</Text>
                 <AppIcon name="arrow-left" size={16} color={Colors.textMuted} />
               </TouchableOpacity>
             </View>

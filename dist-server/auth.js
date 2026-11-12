@@ -7,11 +7,17 @@ function getJwks() {
     if (!jwks) {
         const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY || process.env.CLERK_PUBLISHABLE_KEY;
         let issuer = 'https://clerk.linkflow.app';
-        if (publishableKey && publishableKey.startsWith('pk_test_')) {
+        // Clerk publishable keys encode the frontend API host:
+        //   pk_test_<base64(frontend-api$)>
+        //   pk_live_<base64(frontend-api$)>
+        const keyMatch = publishableKey && publishableKey.match(/^pk_(?:test|live)_(.+)$/);
+        if (keyMatch) {
             try {
-                const decoded = Buffer.from(publishableKey.replace('pk_test_', ''), 'base64').toString('utf8');
-                const frontendApi = decoded.replace(/\$$/, '');
-                issuer = `https://${frontendApi}`;
+                const decoded = Buffer.from(keyMatch[1], 'base64').toString('utf8');
+                const frontendApi = decoded.replace(/\$$/, '').trim();
+                if (frontendApi) {
+                    issuer = `https://${frontendApi}`;
+                }
             }
             catch {
                 // Fallback to default
@@ -24,14 +30,14 @@ function getJwks() {
 }
 /**
  * Verifies a Clerk JWT token sent in the Authorization header.
- * Supports cryptographic remote JWKS verification, and graceful local decoding
- * if network connection to Clerk JWKS is blocked in isolated sandbox environments.
+ * The token signature MUST be verified against the Clerk instance JWKS.
+ * Unsigned/forged tokens are always rejected so a client can never
+ * impersonate another user.
  */
 async function verifyClerkToken(token) {
     if (!token) {
         throw new Error('Authorization token is missing.');
     }
-    // First attempt cryptographic JWKS verification
     try {
         const keySet = getJwks();
         const { payload } = await (0, jose_1.jwtVerify)(token, keySet);
@@ -45,26 +51,7 @@ async function verifyClerkToken(token) {
             claims: payload,
         };
     }
-    catch (jwksError) {
-        // If running in an isolated environment without outbound network to Clerk JWKS,
-        // safely parse the JWT payload structure to ensure claims validity
-        const parts = token.split('.');
-        if (parts.length === 3) {
-            try {
-                const payloadJson = Buffer.from(parts[1], 'base64').toString('utf8');
-                const payload = JSON.parse(payloadJson);
-                if (payload.sub && typeof payload.sub === 'string' && (payload.sub.startsWith('user_') || payload.sub.length > 5)) {
-                    return {
-                        clerkUserId: payload.sub,
-                        email: payload.email || payload.email_address,
-                        claims: payload,
-                    };
-                }
-            }
-            catch {
-                // Fall through to throw original error
-            }
-        }
-        throw new Error(`Token verification failed: ${jwksError.message}`);
+    catch (err) {
+        throw new Error(`Token verification failed: ${err.message}`);
     }
 }

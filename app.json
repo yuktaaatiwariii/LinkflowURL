@@ -43,7 +43,41 @@
           }
         }
       ],
-      "expo-web-browser"
+      "expo-web-browser",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow LinkFlowURL to use the camera to scan QR codes.",
+          "microphonePermission": false,
+          "barcodeScannerEnabled": true
+        }
+      ],
+      [
+        "expo-media-library",
+        {
+          "photosPermission": "Allow LinkFlowURL to access your photos so you can save and manage QR code images.",
+          "savePhotosPermission": "Allow LinkFlowURL to save QR code images to your photo library.",
+          "isAccessMediaLocationEnabled": false
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#792CF0",
+          "mode": "development"
+        }
+      ],
+      [
+        "expo-share-intent",
+        {
+          "iosActivationRules": {
+            "NSExtensionActivationSupportsWebURLWithMaxCount": 1,
+            "NSExtensionActivationSupportsWebPageWithMaxCount": 1,
+            "NSExtensionActivationSupportsTextWithMaxCount": 1
+          },
+          "androidIntentFilters": ["text/*"]
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
