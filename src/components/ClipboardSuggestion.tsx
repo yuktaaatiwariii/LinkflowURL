@@ -68,8 +68,6 @@ export const ClipboardSuggestion: React.FC<ClipboardSuggestionProps> = ({
       ]}
       accessibilityLiveRegion="polite"
     >
-      <View style={styles.glow} pointerEvents="none" />
-
       <View style={styles.headerRow}>
         <View style={styles.iconWrap}>
           <AppIcon name="link" size={18} color={Colors.accentLight} />
@@ -94,7 +92,7 @@ export const ClipboardSuggestion: React.FC<ClipboardSuggestionProps> = ({
           accessibilityRole="button"
           accessibilityLabel="Shorten the URL from your clipboard"
         >
-          <AppIcon name="zap" size={16} color="#FFFFFF" />
+          <AppIcon name="zap" size={16} color={Colors.background} />
           <Text style={styles.shortenText}>Shorten</Text>
         </TouchableOpacity>
 
@@ -123,16 +121,6 @@ const styles = StyleSheet.create({
     padding: 16,
     overflow: 'hidden',
     gap: 14,
-  },
-  glow: {
-    position: 'absolute',
-    top: -60,
-    right: -40,
-    width: 160,
-    height: 160,
-    borderRadius: 80,
-    backgroundColor: Colors.primaryDeep,
-    opacity: 0.35,
   },
   headerRow: {
     flexDirection: 'row',
@@ -195,7 +183,7 @@ const styles = StyleSheet.create({
   shortenText: {
     fontSize: 14.5,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: Colors.background,
   },
   dismissButton: {
     backgroundColor: Colors.surfaceSecondary,

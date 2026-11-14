@@ -1,10 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import QRCode from 'react-native-qrcode-svg';
 import { AppIcon } from '../AppIcon';
 import { L, glow } from './landingTheme';
-import { RadialGlow } from './landingPrimitives';
 
 const BARS = [22, 34, 27, 46, 38, 58, 49];
 
@@ -17,31 +15,14 @@ const RECENT = [
  * Promotional dashboard mockup.
  *
  * Deliberately static artwork (badged "Preview") — it never pretends to be
- * live account data and is not wired to any API.
+ * live account data and is not wired to any API. Monochrome, no ambient
+ * glow or gradient decoration.
  */
 export function DashboardPreview() {
   return (
     <View style={styles.stage}>
-      <RadialGlow
-        size={320}
-        color={L.primary}
-        opacity={0.34}
-        style={styles.glowBack}
-      />
-      <RadialGlow
-        size={190}
-        color="#C4A8FF"
-        opacity={0.14}
-        style={styles.glowTop}
-      />
-
       <View style={styles.phone}>
-        <LinearGradient
-          colors={['#1C1030', '#0F0819']}
-          start={{ x: 0.1, y: 0 }}
-          end={{ x: 0.9, y: 1 }}
-          style={styles.screen}
-        >
+        <View style={styles.screen}>
           <View style={styles.notch} />
 
           <View style={styles.statusRow}>
@@ -70,14 +51,14 @@ export function DashboardPreview() {
           <View style={styles.statRow}>
             <View style={styles.statCard}>
               <View style={styles.statIcon}>
-                <AppIcon name="chart" size={12} color={L.lavender} />
+                <AppIcon name="chart" size={12} color={L.textSecondary} />
               </View>
               <Text style={styles.statValue}>12.4K</Text>
               <Text style={styles.statLabel}>Total clicks</Text>
             </View>
             <View style={styles.statCard}>
               <View style={styles.statIcon}>
-                <AppIcon name="link" size={12} color={L.lavender} />
+                <AppIcon name="link" size={12} color={L.textSecondary} />
               </View>
               <Text style={styles.statValue}>248</Text>
               <Text style={styles.statLabel}>Shortened links</Text>
@@ -91,12 +72,13 @@ export function DashboardPreview() {
             </View>
             <View style={styles.bars}>
               {BARS.map((height, index) => (
-                <LinearGradient
+                <View
                   key={index}
-                  colors={index === BARS.length - 1 ? ['#E3CBFF', '#9B4DFF'] : ['#8B3CF7', '#4B139E']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 0, y: 1 }}
-                  style={[styles.bar, { height }]}
+                  style={[
+                    styles.bar,
+                    { height },
+                    index === BARS.length - 1 && styles.barActive,
+                  ]}
                 />
               ))}
             </View>
@@ -115,7 +97,7 @@ export function DashboardPreview() {
             {RECENT.map((item) => (
               <View key={item.label} style={styles.linkRow}>
                 <View style={styles.linkFavicon}>
-                  <AppIcon name="link" size={10} color={L.lavender} />
+                  <AppIcon name="link" size={10} color={L.textSecondary} />
                 </View>
                 <View style={styles.linkRowCopy}>
                   <Text style={styles.linkUrl}>{item.label}</Text>
@@ -130,15 +112,15 @@ export function DashboardPreview() {
 
           <View style={styles.qrRow}>
             <View style={styles.qrTile}>
-              <QRCode value="https://linkflow.url/preview" size={34} color="#12081F" backgroundColor="#FFFFFF" />
+              <QRCode value="https://linkflow.url/preview" size={34} color="#000000" backgroundColor="#FFFFFF" />
             </View>
             <View style={styles.qrCopy}>
               <Text style={styles.qrTitle}>Latest QR code</Text>
               <Text style={styles.qrSub}>Ready to share anywhere</Text>
             </View>
-            <AppIcon name="arrow-right" size={13} color={L.lavender} />
+            <AppIcon name="arrow-right" size={13} color={L.textSecondary} />
           </View>
-        </LinearGradient>
+        </View>
       </View>
     </View>
   );
@@ -150,37 +132,30 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
   },
-  glowBack: {
-    top: 30,
-    alignSelf: 'center',
-  },
-  glowTop: {
-    top: -20,
-    right: 0,
-  },
 
   phone: {
     width: 276,
-    borderRadius: 34,
+    borderRadius: 30,
     padding: 7,
-    backgroundColor: '#0C0716',
+    backgroundColor: L.cardDeep,
     borderWidth: 1,
-    borderColor: 'rgba(196, 168, 255, 0.24)',
-    ...glow('#792CF0', 0.45, 24, 18),
+    borderColor: L.border,
+    ...glow('#000000', 0.45, 20, 14),
   },
   screen: {
-    borderRadius: 27,
+    borderRadius: 24,
     paddingHorizontal: 13,
     paddingTop: 11,
     paddingBottom: 14,
     overflow: 'hidden',
+    backgroundColor: L.bg,
   },
   notch: {
     alignSelf: 'center',
     width: 52,
     height: 5,
     borderRadius: 3,
-    backgroundColor: 'rgba(196, 168, 255, 0.24)',
+    backgroundColor: L.borderStrong,
     marginBottom: 9,
   },
   statusRow: {
@@ -189,13 +164,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 12,
   },
-  statusText: { fontSize: 9, fontWeight: '700', color: 'rgba(196, 168, 255, 0.7)' },
+  statusText: { fontSize: 9, fontWeight: '700', color: L.textMuted },
   statusDots: { flexDirection: 'row', gap: 3 },
   statusDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(196, 168, 255, 0.45)',
+    backgroundColor: L.borderStrong,
   },
 
   header: {
@@ -211,23 +186,21 @@ const styles = StyleSheet.create({
     backgroundColor: L.primary,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(200, 165, 255, 0.5)',
   },
-  avatarText: { fontSize: 12, fontWeight: '800', color: '#FFFFFF' },
+  avatarText: { fontSize: 12, fontWeight: '800', color: L.bg },
   headerCopy: { flex: 1 },
-  headerTitle: { fontSize: 13, fontWeight: '800', color: '#FFFFFF' },
-  headerSub: { fontSize: 8.5, color: 'rgba(196, 181, 232, 0.7)', marginTop: 1 },
+  headerTitle: { fontSize: 13, fontWeight: '800', color: L.text },
+  headerSub: { fontSize: 8.5, color: L.textMuted, marginTop: 1 },
   previewPill: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     paddingHorizontal: 7,
     paddingVertical: 3,
-    borderRadius: 20,
-    backgroundColor: 'rgba(52, 211, 153, 0.12)',
+    borderRadius: 6,
+    backgroundColor: L.card,
     borderWidth: 1,
-    borderColor: 'rgba(52, 211, 153, 0.3)',
+    borderColor: L.border,
   },
   previewDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: '#34D399' },
   previewText: { fontSize: 7, fontWeight: '800', color: '#34D399' },
@@ -235,30 +208,30 @@ const styles = StyleSheet.create({
   statRow: { flexDirection: 'row', gap: 9, marginBottom: 10 },
   statCard: {
     flex: 1,
-    borderRadius: 14,
+    borderRadius: 12,
     padding: 10,
-    backgroundColor: 'rgba(155, 77, 255, 0.1)',
+    backgroundColor: L.card,
     borderWidth: 1,
-    borderColor: 'rgba(155, 77, 255, 0.22)',
+    borderColor: L.border,
   },
   statIcon: {
     width: 22,
     height: 22,
     borderRadius: 7,
-    backgroundColor: 'rgba(155, 77, 255, 0.18)',
+    backgroundColor: L.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 7,
   },
-  statValue: { fontSize: 15, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.3 },
-  statLabel: { fontSize: 7.5, fontWeight: '600', color: 'rgba(196, 181, 232, 0.75)', marginTop: 2 },
+  statValue: { fontSize: 15, fontWeight: '800', color: L.text, letterSpacing: -0.3 },
+  statLabel: { fontSize: 7.5, fontWeight: '600', color: L.textMuted, marginTop: 2 },
 
   analyticsCard: {
-    borderRadius: 14,
+    borderRadius: 12,
     padding: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: L.card,
     borderWidth: 1,
-    borderColor: 'rgba(196, 168, 255, 0.12)',
+    borderColor: L.border,
     marginBottom: 10,
   },
   cardHead: {
@@ -267,9 +240,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  cardTitle: { fontSize: 9.5, fontWeight: '800', color: '#F2E9FF' },
-  cardMeta: { fontSize: 7, fontWeight: '600', color: 'rgba(196, 181, 232, 0.6)' },
-  cardLink: { fontSize: 7.5, fontWeight: '700', color: L.lavender },
+  cardTitle: { fontSize: 9.5, fontWeight: '800', color: L.text },
+  cardMeta: { fontSize: 7, fontWeight: '600', color: L.textMuted },
+  cardLink: { fontSize: 7.5, fontWeight: '700', color: L.textSecondary },
   bars: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -277,21 +250,22 @@ const styles = StyleSheet.create({
     height: 62,
     paddingHorizontal: 2,
   },
-  bar: { width: 15, borderRadius: 5 },
+  bar: { width: 15, borderRadius: 3, backgroundColor: L.surfaceSecondary },
+  barActive: { backgroundColor: L.primary },
   barAxis: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginTop: 6,
     paddingHorizontal: 2,
   },
-  axisLabel: { fontSize: 6.5, fontWeight: '600', color: 'rgba(196, 181, 232, 0.45)' },
+  axisLabel: { fontSize: 6.5, fontWeight: '600', color: L.textMuted },
 
   listCard: {
-    borderRadius: 14,
+    borderRadius: 12,
     padding: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+    backgroundColor: L.card,
     borderWidth: 1,
-    borderColor: 'rgba(196, 168, 255, 0.1)',
+    borderColor: L.border,
     marginBottom: 10,
   },
   linkRow: {
@@ -300,47 +274,47 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 6,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(196, 168, 255, 0.07)',
+    borderTopColor: L.borderSoft,
   },
   linkFavicon: {
     width: 22,
     height: 22,
     borderRadius: 7,
-    backgroundColor: 'rgba(155, 77, 255, 0.16)',
+    backgroundColor: L.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   linkRowCopy: { flex: 1 },
-  linkUrl: { fontSize: 8.5, fontWeight: '700', color: '#E9DDFF' },
-  linkMeta: { fontSize: 7, color: 'rgba(196, 181, 232, 0.55)', marginTop: 1 },
+  linkUrl: { fontSize: 8.5, fontWeight: '700', color: L.text },
+  linkMeta: { fontSize: 7, color: L.textMuted, marginTop: 1 },
   linkClicks: {
     paddingHorizontal: 5,
     paddingVertical: 2,
-    borderRadius: 6,
-    backgroundColor: 'rgba(155, 77, 255, 0.16)',
+    borderRadius: 4,
+    backgroundColor: L.surfaceSecondary,
   },
-  linkClicksText: { fontSize: 7, fontWeight: '800', color: L.lavender },
+  linkClicksText: { fontSize: 7, fontWeight: '800', color: L.textSecondary },
 
   qrRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 9,
-    borderRadius: 14,
+    borderRadius: 12,
     padding: 9,
-    backgroundColor: 'rgba(155, 77, 255, 0.08)',
+    backgroundColor: L.card,
     borderWidth: 1,
-    borderColor: 'rgba(155, 77, 255, 0.18)',
+    borderColor: L.border,
   },
   qrTile: {
     width: 44,
     height: 44,
-    borderRadius: 10,
+    borderRadius: 8,
     backgroundColor: '#FFFFFF',
     padding: 5,
     alignItems: 'center',
     justifyContent: 'center',
   },
   qrCopy: { flex: 1 },
-  qrTitle: { fontSize: 9.5, fontWeight: '800', color: '#F2E9FF' },
-  qrSub: { fontSize: 7.5, color: 'rgba(196, 181, 232, 0.65)', marginTop: 2 },
+  qrTitle: { fontSize: 9.5, fontWeight: '800', color: L.text },
+  qrSub: { fontSize: 7.5, color: L.textMuted, marginTop: 2 },
 });

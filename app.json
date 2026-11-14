@@ -63,7 +63,7 @@
       [
         "expo-notifications",
         {
-          "color": "#792CF0",
+          "color": "#FFFFFF",
           "mode": "development"
         }
       ],

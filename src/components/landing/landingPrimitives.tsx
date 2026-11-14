@@ -11,19 +11,18 @@ import {
 import Svg, {
   Circle,
   Defs,
-  LinearGradient,
   RadialGradient,
   Stop,
   Text as SvgText,
 } from 'react-native-svg';
-import { G, L, SANS } from './landingTheme';
+import { L, SANS } from './landingTheme';
 
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 /**
- * Headline rendered as SVG so the highlighted line can carry a real
- * purple gradient. All lines share one SVG box, which keeps baselines and
- * line spacing perfectly consistent across platforms.
+ * Headline rendered as SVG so all lines share one box, which keeps
+ * baselines and line spacing perfectly consistent across platforms.
+ * Highlighted lines render solid white — no gradient text.
  */
 export function GradientHeadline({
   lines,
@@ -42,21 +41,13 @@ export function GradientHeadline({
 
   return (
     <Svg width={width} height={height} style={{ alignSelf: 'center' }}>
-      <Defs>
-        <LinearGradient id={id} x1="0" y1="0" x2="1" y2="0.6">
-          <Stop offset="0" stopColor={G.heading[0]} />
-          <Stop offset="0.55" stopColor={G.heading[1]} />
-          <Stop offset="1" stopColor={G.heading[2]} />
-        </LinearGradient>
-      </Defs>
-
       {lines.map((line, index) => (
         <SvgText
           key={line.text}
           x={width / 2}
           y={index * lineHeight + lineHeight * 0.75}
           textAnchor="middle"
-          fill={line.gradient ? `url(#${id})` : L.text}
+          fill={L.text}
           fontSize={fontSize}
           fontWeight="800"
           fontFamily={SANS}

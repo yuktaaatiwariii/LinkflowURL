@@ -51,17 +51,20 @@ import {
 } from '../../src/utils/qrExport';
 
 const T = {
-  bg: '#080510',
-  sidebar: '#0D0718',
-  card: '#150D24',
-  border: '#2E1E46',
-  purple: '#7900FF',
-  purpleDeep: '#4B00A8',
-  violet: '#A855F7',
-  lilac: '#C9A7FF',
+  bg: '#181818',
+  sidebar: '#1C1C1C',
+  card: '#202020',
+  elevated: '#262626',
+  surface: '#303030',
+  border: '#3A3A3A',
+  purple: '#FFFFFF',
+  purpleDeep: '#E5E5E5',
+  violet: '#C4C4C4',
+  lilac: '#C4C4C4',
   text: '#FFFFFF',
-  muted: '#A896C6',
-  faint: '#776890',
+  muted: '#999999',
+  faint: '#7A7A7A',
+  onPrimary: '#181818',
   green: '#34D399',
   greenBg: 'rgba(52, 211, 153, 0.12)',
 };
@@ -156,8 +159,7 @@ function Brand({ compact = false }: { compact?: boolean }) {
   return (
     <View style={styles.brand}>
       <View style={[styles.brandMark, compact && styles.brandMarkCompact]}>
-        <View style={styles.brandGlow} pointerEvents="none" />
-        <AppIcon name="link" size={compact ? 17 : 20} color="#FFFFFF" />
+        <AppIcon name="link" size={compact ? 17 : 20} color={T.onPrimary} />
       </View>
       <Text style={[styles.brandText, compact && styles.brandTextCompact]}>LinkFlow</Text>
     </View>
@@ -191,8 +193,7 @@ function Sidebar({
             style={[styles.navItem, item.active && styles.navItemActive]}
             onPress={() => onNavigate(item.path)}
           >
-            {item.active ? <View style={styles.navGlow} pointerEvents="none" /> : null}
-            <AppIcon name={item.icon} size={19} color={item.active ? '#FFFFFF' : T.muted} />
+            <AppIcon name={item.icon} size={19} color={item.active ? T.onPrimary : T.muted} />
             <Text style={[styles.navText, item.active && styles.navTextActive]}>{item.label}</Text>
           </TouchableOpacity>
         ))}
@@ -261,7 +262,7 @@ function TopBar({
             style={[styles.pill, item.active && styles.pillActive]}
             onPress={() => onNavigate(item.path)}
           >
-            <AppIcon name={item.icon} size={14} color={item.active ? '#FFFFFF' : T.muted} />
+            <AppIcon name={item.icon} size={14} color={item.active ? T.onPrimary : T.muted} />
             <Text
               style={[styles.pillText, item.active && styles.pillTextActive]}
               numberOfLines={1}
@@ -278,14 +279,9 @@ function TopBar({
 function ChainArt() {
   return (
     <View style={styles.art} pointerEvents="none">
-      <View style={[styles.artRing, styles.artRingOuter]} />
-      <View style={[styles.artRing, styles.artRingMid]} />
       <View style={styles.artCore}>
-        <AppIcon name="link" size={38} color="#EDE0FF" />
+        <AppIcon name="link" size={30} color={T.text} />
       </View>
-      <View style={[styles.artDot, { top: 16, right: 30, width: 9, height: 9 }]} />
-      <View style={[styles.artDot, { bottom: 24, left: 16, width: 6, height: 6, opacity: 0.7 }]} />
-      <View style={[styles.artDot, { top: 62, left: 8, width: 5, height: 5, opacity: 0.5 }]} />
     </View>
   );
 }
@@ -310,12 +306,10 @@ function Welcome({ displayName, compact }: { displayName: string; compact: boole
 function ShortenCard({ compact, onPress }: { compact: boolean; onPress: () => void }) {
   return (
     <View style={styles.shortenOuter}>
-      <View style={styles.shortenGlowA} pointerEvents="none" />
-      <View style={styles.shortenGlowB} pointerEvents="none" />
       <View style={[styles.shortenInner, compact && styles.shortenInnerCompact]}>
         <View style={styles.shortenLead}>
           <View style={styles.shortenIcon}>
-            <AppIcon name="link" size={22} color="#FFFFFF" />
+            <AppIcon name="link" size={22} color={T.text} />
           </View>
           <View style={styles.shortenCopy}>
             <Text style={styles.shortenTitle}>Shorten a URL</Text>
@@ -337,7 +331,7 @@ function ShortenCard({ compact, onPress }: { compact: boolean; onPress: () => vo
 
         <TouchableOpacity activeOpacity={0.85} style={styles.shortenBtn} onPress={onPress}>
           <Text style={styles.shortenBtnText}>Shorten</Text>
-          <AppIcon name="arrow-right" size={16} color={T.purpleDeep} />
+          <AppIcon name="arrow-right" size={16} color={T.onPrimary} />
         </TouchableOpacity>
       </View>
     </View>
@@ -347,9 +341,8 @@ function ShortenCard({ compact, onPress }: { compact: boolean; onPress: () => vo
 function QrQuickCard({ onPress }: { onPress: () => void }) {
   return (
     <View style={styles.qrQuick}>
-      <View style={styles.qrQuickGlow} pointerEvents="none" />
       <View style={styles.qrQuickIcon}>
-        <AppIcon name="qr" size={22} color="#FFFFFF" />
+        <AppIcon name="qr" size={22} color={T.text} />
       </View>
       <Text style={styles.qrQuickTitle}>Generate QR Code</Text>
       <Text style={styles.qrQuickDesc}>Create a scannable code for any link.</Text>
@@ -706,8 +699,7 @@ function MobileHeader({ initial, onProfile }: { initial: string; onProfile: () =
     <View style={styles.mHeader}>
       <View style={styles.mBrand}>
         <View style={styles.mBrandMark}>
-          <View style={styles.mBrandGlow} pointerEvents="none" />
-          <AppIcon name="link" size={18} color="#FFFFFF" />
+          <AppIcon name="link" size={18} color={T.onPrimary} />
         </View>
         <Text style={styles.mBrandText}>
           LinkFlow <Text style={styles.mBrandAccent}>URL</Text>
@@ -721,7 +713,6 @@ function MobileHeader({ initial, onProfile }: { initial: string; onProfile: () =
         accessibilityRole="button"
         accessibilityLabel="Open profile"
       >
-        <View style={styles.mAvatarGlow} pointerEvents="none" />
         <Text style={styles.mAvatarText}>{initial}</Text>
       </TouchableOpacity>
     </View>
@@ -749,18 +740,9 @@ function MobileHero({ displayName }: { displayName: string }) {
       </View>
 
       <View style={styles.mHeroArt} pointerEvents="none">
-        <View style={[styles.mHeroRing, styles.mHeroRingOuter]} />
-        <View style={[styles.mHeroRing, styles.mHeroRingInner]} />
         <View style={styles.mHeroCore}>
-          <AppIcon name="link" size={26} color="#F3E8FF" />
+          <AppIcon name="link" size={24} color={T.text} />
         </View>
-        <View style={[styles.mHeroDot, { top: 6, right: 14, width: 8, height: 8 }]} />
-        <View
-          style={[styles.mHeroDot, { bottom: 10, left: 4, width: 5, height: 5, opacity: 0.7 }]}
-        />
-        <View
-          style={[styles.mHeroDot, { top: 38, left: 2, width: 4, height: 4, opacity: 0.5 }]}
-        />
       </View>
     </View>
   );
@@ -783,12 +765,9 @@ function MobileShortenCard({
 
   return (
     <View style={styles.mShortenOuter}>
-      <View style={styles.mShortenGlowA} pointerEvents="none" />
-      <View style={styles.mShortenGlowB} pointerEvents="none" />
-
       <View style={styles.mShortenHeader}>
         <View style={styles.mShortenIcon}>
-          <AppIcon name="zap" size={20} color="#FFFFFF" />
+          <AppIcon name="zap" size={20} color={T.text} />
         </View>
         <View style={styles.mShortenCopy}>
           <Text style={styles.mShortenTitle}>Shorten a URL</Text>
@@ -818,7 +797,7 @@ function MobileShortenCard({
           accessibilityRole="button"
           accessibilityLabel="Shorten URL"
         >
-          <AppIcon name="send" size={20} color={T.purpleDeep} />
+          <AppIcon name="send" size={20} color={T.onPrimary} />
         </TouchableOpacity>
       </View>
 
@@ -1113,8 +1092,8 @@ function MobileDashboardContent(props: DashboardContentProps) {
   const stats: StatCardData[] = [
     { label: 'Total Links', value: linksLoading ? '—' : totalLinks, icon: 'link', accent: T.purple },
     { label: 'QR Codes', value: qrLoading ? '—' : qrCount, icon: 'qr', accent: T.violet },
-    { label: 'Active Links', value: linksLoading ? '—' : activeLinks, icon: 'chart', accent: T.green },
-    { label: 'Clicks', value: linksLoading ? '—' : totalClicks, icon: 'clock', accent: Colors.warning },
+    { label: 'Active Links', value: linksLoading ? '—' : activeLinks, icon: 'chart', accent: T.muted },
+    { label: 'Clicks', value: linksLoading ? '—' : totalClicks, icon: 'clock', accent: T.faint },
   ];
 
   return (
@@ -1272,8 +1251,8 @@ function DashboardContent(props: DashboardContentProps) {
   const overviewCards: StatCardData[] = [
     { label: 'Total Links', value: linksLoading ? '—' : totalLinks, icon: 'link', accent: T.purple },
     { label: 'QR Codes', value: qrLoading ? '—' : qrCount, icon: 'qr', accent: T.violet },
-    { label: 'Active Links', value: linksLoading ? '—' : activeLinks, icon: 'chart', accent: T.green },
-    { label: 'Clicks', value: linksLoading ? '—' : totalClicks, icon: 'chart', accent: Colors.warning },
+    { label: 'Active Links', value: linksLoading ? '—' : activeLinks, icon: 'chart', accent: T.muted },
+    { label: 'Clicks', value: linksLoading ? '—' : totalClicks, icon: 'chart', accent: T.faint },
   ];
 
   // Mobile uses the dedicated reference-matched layout; desktop is untouched.
@@ -1342,14 +1321,14 @@ function DashboardContent(props: DashboardContentProps) {
           actionLabel="View All Links"
           onAction={() => props.onNavigate('/(protected)/links')}
           accent={T.purple}
-          accentBg="rgba(121, 0, 255, 0.16)"
+          accentBg="rgba(255, 255, 255, 0.06)"
         >
           <MetricGrid
             columns={columns}
             items={[
               { label: 'Total Links Created', value: linksLoading ? '—' : totalLinks, icon: 'link', tone: T.lilac },
-              { label: 'Active Links', value: linksLoading ? '—' : activeLinks, icon: 'chart', tone: T.green },
-              { label: 'Total Link Clicks', value: linksLoading ? '—' : totalClicks, icon: 'chart', tone: Colors.warning },
+              { label: 'Active Links', value: linksLoading ? '—' : activeLinks, icon: 'chart', tone: T.muted },
+              { label: 'Total Link Clicks', value: linksLoading ? '—' : totalClicks, icon: 'chart', tone: T.violet },
               { label: 'Recent Links (7d)', value: linksLoading ? '—' : linksThisWeek, icon: 'sparkles', tone: T.violet },
             ]}
           />
@@ -1429,14 +1408,14 @@ function DashboardContent(props: DashboardContentProps) {
           actionLabel="View All QR Codes"
           onAction={() => props.onNavigate('/(protected)/qr')}
           accent={T.violet}
-          accentBg="rgba(168, 85, 247, 0.16)"
+          accentBg="rgba(255, 255, 255, 0.06)"
         >
           <MetricGrid
             columns={columns}
             items={[
               { label: 'Total QR Codes', value: qrLoading ? '—' : qrCount, icon: 'qr', tone: T.lilac },
               { label: 'Created (last 30d)', value: qrLoading ? '—' : qrThisMonth, icon: 'sparkles', tone: T.violet },
-              { label: 'Linked to Short Links', value: qrLoading ? '—' : qrLinkedCount, icon: 'link', tone: T.green },
+              { label: 'Linked to Short Links', value: qrLoading ? '—' : qrLinkedCount, icon: 'link', tone: T.muted },
               { label: 'QR Scans', value: 'Not tracked', icon: 'chart', tone: T.faint },
             ]}
           />
@@ -1977,23 +1956,12 @@ const styles = StyleSheet.create({
   brandMark: {
     width: 40,
     height: 40,
-    borderRadius: 13,
+    borderRadius: 10,
     backgroundColor: T.purple,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
   },
-  brandMarkCompact: { width: 34, height: 34, borderRadius: 11 },
-  brandGlow: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    width: 26,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: T.violet,
-    opacity: 0.55,
-  },
+  brandMarkCompact: { width: 34, height: 34, borderRadius: 9 },
   brandText: { fontSize: 19, fontWeight: '800', color: T.text, letterSpacing: 0.2 },
   brandTextCompact: { fontSize: 16 },
   sidebar: {
@@ -2017,18 +1985,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   navItemActive: { backgroundColor: T.purple },
-  navGlow: {
-    position: 'absolute',
-    right: -10,
-    top: -14,
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: T.violet,
-    opacity: 0.45,
-  },
   navText: { fontSize: 14, fontWeight: '600', color: T.muted },
-  navTextActive: { color: T.text },
+  navTextActive: { color: T.onPrimary },
   sidebarFooter: {
     marginTop: 'auto',
     paddingTop: 18,
@@ -2047,7 +2005,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarText: { fontSize: 15, fontWeight: '800', color: T.text },
+  avatarText: { fontSize: 15, fontWeight: '800', color: T.onPrimary },
   sidebarUserText: { flex: 1, minWidth: 0 },
   sidebarName: { fontSize: 13.5, fontWeight: '700', color: T.text },
   sidebarEmail: { fontSize: 11.5, color: T.faint, marginTop: 1 },
@@ -2078,7 +2036,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarSmallText: { fontSize: 14, fontWeight: '800', color: T.text },
+  avatarSmallText: { fontSize: 14, fontWeight: '800', color: T.onPrimary },
   iconBtn: {
     width: 34,
     height: 34,
@@ -2105,7 +2063,7 @@ const styles = StyleSheet.create({
   },
   pillActive: { backgroundColor: T.purple, borderColor: T.purple },
   pillText: { fontSize: 10.5, fontWeight: '700', color: T.muted },
-  pillTextActive: { color: T.text },
+  pillTextActive: { color: T.onPrimary },
 
   /* Welcome */
   welcome: {
@@ -2118,12 +2076,12 @@ const styles = StyleSheet.create({
   welcomeText: { flex: 1, minWidth: 0 },
   welcomeBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(121, 0, 255, 0.14)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.35)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     paddingHorizontal: 11,
     paddingVertical: 5,
-    borderRadius: 999,
+    borderRadius: 8,
     marginBottom: 10,
   },
   welcomeBadgeText: { fontSize: 12, fontWeight: '600', color: T.lilac },
@@ -2131,30 +2089,16 @@ const styles = StyleSheet.create({
   welcomeTitleCompact: { fontSize: 23 },
   welcomeSub: { fontSize: 14, color: T.muted, marginTop: 6 },
   art: { width: 132, height: 132, alignItems: 'center', justifyContent: 'center' },
-  artRing: {
-    position: 'absolute',
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.3)',
-  },
-  artRingOuter: { width: 132, height: 132 },
-  artRingMid: {
-    width: 96,
-    height: 96,
-    backgroundColor: 'rgba(121, 0, 255, 0.16)',
-    borderColor: 'rgba(168, 85, 247, 0.45)',
-  },
   artCore: {
     width: 66,
     height: 66,
-    borderRadius: 33,
-    backgroundColor: 'rgba(121, 0, 255, 0.55)',
+    borderRadius: 16,
+    backgroundColor: T.elevated,
     borderWidth: 1,
-    borderColor: 'rgba(200, 165, 255, 0.6)',
+    borderColor: T.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  artDot: { position: 'absolute', borderRadius: 999, backgroundColor: T.violet },
 
   /* Quick actions */
   quickRow: { gap: 14, marginBottom: 22 },
@@ -2164,33 +2108,13 @@ const styles = StyleSheet.create({
   quickSide: { flex: 1, minWidth: 220 },
   shortenOuter: {
     position: 'relative',
-    borderRadius: 20,
+    borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: T.purple,
+    backgroundColor: T.card,
     borderWidth: 1,
-    borderColor: 'rgba(200, 165, 255, 0.28)',
+    borderColor: T.border,
     height: '100%',
     justifyContent: 'center',
-  },
-  shortenGlowA: {
-    position: 'absolute',
-    width: 220,
-    height: 220,
-    borderRadius: 110,
-    backgroundColor: '#B266FF',
-    opacity: 0.35,
-    top: -120,
-    right: -40,
-  },
-  shortenGlowB: {
-    position: 'absolute',
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: '#3D00A0',
-    opacity: 0.45,
-    bottom: -110,
-    left: -30,
   },
   shortenInner: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 18 },
   shortenInnerCompact: { flexDirection: 'column', alignItems: 'stretch', gap: 12 },
@@ -2198,18 +2122,18 @@ const styles = StyleSheet.create({
   shortenIcon: {
     width: 46,
     height: 46,
-    borderRadius: 13,
-    backgroundColor: 'rgba(255, 255, 255, 0.16)',
+    borderRadius: 10,
+    backgroundColor: T.surface,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.24)',
+    borderColor: T.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   shortenCopy: { flex: 1, minWidth: 0 },
-  shortenTitle: { fontSize: 17, fontWeight: '800', color: '#FFFFFF' },
+  shortenTitle: { fontSize: 17, fontWeight: '800', color: T.text },
   shortenDesc: {
     fontSize: 12.5,
-    color: 'rgba(255, 255, 255, 0.82)',
+    color: T.muted,
     marginTop: 2,
     lineHeight: 17,
   },
@@ -2221,14 +2145,14 @@ const styles = StyleSheet.create({
     maxWidth: 300,
     height: 46,
     justifyContent: 'center',
-    backgroundColor: 'rgba(8, 5, 16, 0.42)',
+    backgroundColor: T.bg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.22)',
-    borderRadius: 12,
+    borderColor: T.border,
+    borderRadius: 10,
     paddingHorizontal: 14,
   },
   shortenInputCompact: { flexGrow: 0, flexBasis: 'auto', width: '100%', maxWidth: '100%' },
-  shortenPlaceholder: { fontSize: 13, color: 'rgba(255, 255, 255, 0.72)' },
+  shortenPlaceholder: { fontSize: 13, color: T.muted },
   shortenBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2236,39 +2160,29 @@ const styles = StyleSheet.create({
     gap: 7,
     height: 46,
     paddingHorizontal: 18,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    backgroundColor: T.purple,
   },
-  shortenBtnText: { fontSize: 13.5, fontWeight: '800', color: T.purpleDeep },
+  shortenBtnText: { fontSize: 13.5, fontWeight: '800', color: T.onPrimary },
   qrQuick: {
     position: 'relative',
     overflow: 'hidden',
-    borderRadius: 20,
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.35)',
+    borderColor: T.border,
     backgroundColor: T.card,
     padding: 18,
     minHeight: 150,
     justifyContent: 'center',
     gap: 6,
   },
-  qrQuickGlow: {
-    position: 'absolute',
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    backgroundColor: T.violet,
-    opacity: 0.16,
-    top: -60,
-    right: -40,
-  },
   qrQuickIcon: {
     width: 42,
     height: 42,
-    borderRadius: 12,
-    backgroundColor: 'rgba(168, 85, 247, 0.2)',
+    borderRadius: 10,
+    backgroundColor: T.surface,
     borderWidth: 1,
-    borderColor: 'rgba(200, 165, 255, 0.4)',
+    borderColor: T.border,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
@@ -2285,8 +2199,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 9,
     borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.45)',
-    backgroundColor: 'rgba(121, 0, 255, 0.14)',
+    borderColor: 'rgba(255, 255, 255, 0.18)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   qrQuickBtnText: { fontSize: 12, fontWeight: '700', color: T.lilac },
 
@@ -2319,14 +2233,14 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: 'rgba(121, 0, 255, 0.18)',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.28)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   statSpark: { flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 26 },
-  sparkBar: { width: 4, borderRadius: 2, backgroundColor: 'rgba(168, 85, 247, 0.55)' },
+  sparkBar: { width: 4, borderRadius: 2, backgroundColor: 'rgba(255, 255, 255, 0.18)' },
   statValue: { fontSize: 24, fontWeight: '800', color: T.text, letterSpacing: -0.5 },
   statLabel: {
     fontSize: 10.5,
@@ -2380,9 +2294,9 @@ const styles = StyleSheet.create({
   metricCellWide: { flex: 1, minWidth: 0 },
   metricCellHalf: { flexBasis: '46%', flexGrow: 1, minWidth: 0 },
   metricChip: {
-    backgroundColor: 'rgba(33, 20, 55, 0.55)',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderWidth: 1,
-    borderColor: 'rgba(76, 56, 110, 0.45)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 12,
     padding: 12,
     gap: 6,
@@ -2412,9 +2326,9 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 11,
     borderRadius: 12,
-    backgroundColor: 'rgba(121, 0, 255, 0.12)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.28)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   highlightIcon: {
     width: 32,
@@ -2422,7 +2336,7 @@ const styles = StyleSheet.create({
     borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(121, 0, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.07)',
   },
   highlightText: { flex: 1, minWidth: 0 },
   highlightLabel: { fontSize: 10.5, fontWeight: '700', color: T.faint, textTransform: 'uppercase' },
@@ -2449,9 +2363,9 @@ const styles = StyleSheet.create({
     gap: 10,
     padding: 11,
     borderRadius: 12,
-    backgroundColor: 'rgba(33, 20, 55, 0.55)',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderWidth: 1,
-    borderColor: 'rgba(76, 56, 110, 0.45)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   tableCellMain: { flex: 2.2, minWidth: 0 },
   tableCellShort: { flex: 1.6, minWidth: 0 },
@@ -2465,7 +2379,7 @@ const styles = StyleSheet.create({
   tableMeta: { fontSize: 10.5, color: T.faint, marginTop: 2 },
   badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 999, alignSelf: 'flex-start' },
   badgeActive: { backgroundColor: T.greenBg },
-  badgeInactive: { backgroundColor: 'rgba(138, 124, 168, 0.14)' },
+  badgeInactive: { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
   badgeText: { fontSize: 10, fontWeight: '700' },
   iconAction: {
     width: 30,
@@ -2473,9 +2387,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(121, 0, 255, 0.14)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.28)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   iconActionDanger: {
     backgroundColor: 'rgba(239, 68, 68, 0.12)',
@@ -2489,9 +2403,9 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: T.faint,
     lineHeight: 16,
-    backgroundColor: 'rgba(33, 20, 55, 0.5)',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderWidth: 1,
-    borderColor: 'rgba(76, 56, 110, 0.4)',
+    borderColor: 'rgba(255, 255, 255, 0.09)',
     borderRadius: 10,
     padding: 10,
   },
@@ -2501,9 +2415,9 @@ const styles = StyleSheet.create({
   qrPreviewCellWide: { flex: 1, minWidth: 0 },
   qrPreviewCellStack: { flexBasis: '46%', flexGrow: 1, minWidth: 0 },
   qrPreview: {
-    backgroundColor: 'rgba(33, 20, 55, 0.55)',
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
     borderWidth: 1,
-    borderColor: 'rgba(76, 56, 110, 0.45)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 12,
     padding: 10,
     gap: 10,
@@ -2538,9 +2452,9 @@ const styles = StyleSheet.create({
     gap: 5,
     paddingVertical: 7,
     borderRadius: 8,
-    backgroundColor: 'rgba(121, 0, 255, 0.14)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.28)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
   },
   qrPreviewActionText: { fontSize: 11, fontWeight: '700', color: T.lilac },
 
@@ -2552,9 +2466,9 @@ const styles = StyleSheet.create({
     borderRadius: 26,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: 'rgba(121, 0, 255, 0.14)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     marginBottom: 2,
   },
   inlineEmptyTitle: { fontSize: 14.5, fontWeight: '700', color: T.text },
@@ -2620,21 +2534,10 @@ const styles = StyleSheet.create({
   mBrandMark: {
     width: 38,
     height: 38,
-    borderRadius: 12,
+    borderRadius: 10,
     backgroundColor: T.purple,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
-  },
-  mBrandGlow: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: T.violet,
-    opacity: 0.55,
   },
   mBrandText: { fontSize: 17, fontWeight: '800', color: T.text, letterSpacing: 0.2 },
   mBrandAccent: { fontSize: 12.5, fontWeight: '800', color: T.lilac },
@@ -2644,22 +2547,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: T.purple,
     borderWidth: 1,
-    borderColor: 'rgba(200, 165, 255, 0.45)',
+    borderColor: 'rgba(255, 255, 255, 0.18)',
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
   },
-  mAvatarGlow: {
-    position: 'absolute',
-    top: -6,
-    right: -6,
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: T.violet,
-    opacity: 0.5,
-  },
-  mAvatarText: { fontSize: 16, fontWeight: '800', color: T.text },
+  mAvatarText: { fontSize: 16, fontWeight: '800', color: T.onPrimary },
 
   mHero: {
     flexDirection: 'row',
@@ -2671,12 +2564,12 @@ const styles = StyleSheet.create({
   mHeroText: { flex: 1, minWidth: 0 },
   mHeroBadge: {
     alignSelf: 'flex-start',
-    backgroundColor: 'rgba(121, 0, 255, 0.14)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.35)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     paddingHorizontal: 10,
     paddingVertical: 5,
-    borderRadius: 999,
+    borderRadius: 8,
     marginBottom: 9,
   },
   mHeroBadgeText: { fontSize: 11.5, fontWeight: '600', color: T.lilac },
@@ -2688,77 +2581,43 @@ const styles = StyleSheet.create({
   },
   mHeroSub: { fontSize: 12.5, color: T.muted, marginTop: 6, lineHeight: 18 },
   mHeroArt: { width: 96, height: 96, alignItems: 'center', justifyContent: 'center' },
-  mHeroRing: {
-    position: 'absolute',
-    borderRadius: 999,
-    borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.3)',
-  },
-  mHeroRingOuter: { width: 96, height: 96 },
-  mHeroRingInner: {
-    width: 70,
-    height: 70,
-    backgroundColor: 'rgba(121, 0, 255, 0.18)',
-    borderColor: 'rgba(168, 85, 247, 0.45)',
-  },
   mHeroCore: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(121, 0, 255, 0.6)',
+    width: 52,
+    height: 52,
+    borderRadius: 14,
+    backgroundColor: T.elevated,
     borderWidth: 1,
-    borderColor: 'rgba(200, 165, 255, 0.6)',
+    borderColor: T.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  mHeroDot: { position: 'absolute', borderRadius: 999, backgroundColor: T.violet },
 
   mShortenOuter: {
     position: 'relative',
     overflow: 'hidden',
-    borderRadius: 22,
-    backgroundColor: T.purple,
+    borderRadius: 14,
+    backgroundColor: T.card,
     borderWidth: 1,
-    borderColor: 'rgba(200, 165, 255, 0.3)',
+    borderColor: T.border,
     padding: 16,
     marginBottom: 20,
-  },
-  mShortenGlowA: {
-    position: 'absolute',
-    width: 180,
-    height: 180,
-    borderRadius: 90,
-    backgroundColor: '#B266FF',
-    opacity: 0.35,
-    top: -110,
-    right: -50,
-  },
-  mShortenGlowB: {
-    position: 'absolute',
-    width: 150,
-    height: 150,
-    borderRadius: 75,
-    backgroundColor: '#3D00A0',
-    opacity: 0.5,
-    bottom: -100,
-    left: -40,
   },
   mShortenHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 14 },
   mShortenIcon: {
     width: 42,
     height: 42,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.18)',
+    borderRadius: 10,
+    backgroundColor: T.surface,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.26)',
+    borderColor: T.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   mShortenCopy: { flex: 1, minWidth: 0 },
-  mShortenTitle: { fontSize: 16, fontWeight: '800', color: '#FFFFFF' },
+  mShortenTitle: { fontSize: 16, fontWeight: '800', color: T.text },
   mShortenDesc: {
     fontSize: 11.5,
-    color: 'rgba(255, 255, 255, 0.85)',
+    color: T.muted,
     marginTop: 2,
     lineHeight: 16,
   },
@@ -2768,18 +2627,18 @@ const styles = StyleSheet.create({
     minWidth: 0,
     height: 46,
     justifyContent: 'center',
-    backgroundColor: 'rgba(8, 5, 16, 0.5)',
+    backgroundColor: T.bg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.22)',
-    borderRadius: 12,
+    borderColor: T.border,
+    borderRadius: 10,
     paddingHorizontal: 13,
   },
-  mShortenPlaceholder: { fontSize: 12.5, color: 'rgba(255, 255, 255, 0.72)' },
+  mShortenPlaceholder: { fontSize: 12.5, color: T.muted },
   mShortenSend: {
     width: 46,
     height: 46,
-    borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    backgroundColor: T.purple,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2787,7 +2646,7 @@ const styles = StyleSheet.create({
     marginTop: 14,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.18)',
+    borderTopColor: T.border,
     gap: 8,
   },
   mShortenRecentHeader: {
@@ -2799,23 +2658,23 @@ const styles = StyleSheet.create({
   mShortenRecentTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: T.muted,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
   mShortenRecentAll: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: T.text,
   },
   mShortenRecentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 9,
-    backgroundColor: 'rgba(8, 5, 16, 0.42)',
+    backgroundColor: T.bg,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.14)',
-    borderRadius: 10,
+    borderColor: T.border,
+    borderRadius: 8,
     paddingHorizontal: 11,
     paddingVertical: 9,
   },
@@ -2823,24 +2682,24 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: '#C8A5FF',
+    backgroundColor: T.violet,
   },
   mShortenRecentCode: {
     flex: 1,
     minWidth: 0,
     fontSize: 12.5,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: T.text,
   },
   mShortenRecentClicks: {
     fontSize: 11,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.72)',
+    color: T.muted,
   },
   mShortenSkeletonRow: {
     height: 32,
-    borderRadius: 10,
-    backgroundColor: 'rgba(8, 5, 16, 0.42)',
+    borderRadius: 8,
+    backgroundColor: T.bg,
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.12)',
   },
@@ -2865,9 +2724,9 @@ const styles = StyleSheet.create({
   mStatCard: {
     minHeight: 112,
     borderRadius: 18,
-    backgroundColor: 'rgba(23, 16, 39, 0.85)',
+    backgroundColor: T.card,
     borderWidth: 1,
-    borderColor: '#302044',
+    borderColor: T.border,
     padding: 14,
     justifyContent: 'space-between',
     overflow: 'hidden',
@@ -2881,9 +2740,9 @@ const styles = StyleSheet.create({
     width: 38,
     height: 38,
     borderRadius: 19,
-    backgroundColor: 'rgba(121, 0, 255, 0.18)',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2891,7 +2750,7 @@ const styles = StyleSheet.create({
   mSparkBar: {
     width: 3.5,
     borderRadius: 2,
-    backgroundColor: 'rgba(168, 85, 247, 0.55)',
+    backgroundColor: 'rgba(255, 255, 255, 0.18)',
   },
   mStatValue: {
     fontSize: 24,
@@ -2903,9 +2762,9 @@ const styles = StyleSheet.create({
   mStatLabel: { fontSize: 11.5, fontWeight: '600', color: T.muted, marginTop: 2 },
 
   mPanel: {
-    backgroundColor: 'rgba(23, 16, 39, 0.82)',
+    backgroundColor: T.card,
     borderWidth: 1,
-    borderColor: '#302044',
+    borderColor: T.border,
     borderRadius: 20,
     padding: 14,
     marginBottom: 16,
@@ -2923,9 +2782,9 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 10,
-    backgroundColor: 'rgba(121, 0, 255, 0.18)',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2935,7 +2794,7 @@ const styles = StyleSheet.create({
   mLinkRow: {
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(48, 32, 68, 0.7)',
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
     gap: 3,
   },
   mLinkTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
@@ -2949,7 +2808,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
   },
   mStatusActive: { backgroundColor: T.greenBg },
-  mStatusInactive: { backgroundColor: 'rgba(138, 124, 168, 0.14)' },
+  mStatusInactive: { backgroundColor: 'rgba(255, 255, 255, 0.05)' },
   mStatusDot: { width: 5, height: 5, borderRadius: 3 },
   mStatusText: { fontSize: 9.5, fontWeight: '700' },
   mLinkShort: { fontSize: 11.5, fontWeight: '600', color: T.lilac },
@@ -2961,15 +2820,15 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 10,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(48, 32, 68, 0.7)',
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
   },
   mQrIcon: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: 'rgba(168, 85, 247, 0.14)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -2983,9 +2842,9 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: 'rgba(121, 0, 255, 0.14)',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: 'rgba(168, 85, 247, 0.3)',
+    borderColor: 'rgba(255, 255, 255, 0.12)',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 2,
@@ -3001,10 +2860,10 @@ const styles = StyleSheet.create({
     marginTop: 6,
     paddingHorizontal: 16,
     paddingVertical: 9,
-    borderRadius: 11,
+    borderRadius: 9,
     backgroundColor: T.purple,
   },
-  mEmptyBtnText: { fontSize: 12, fontWeight: '700', color: '#FFFFFF' },
+  mEmptyBtnText: { fontSize: 12, fontWeight: '700', color: T.onPrimary },
 
   mMoreRow: { alignItems: 'center', paddingTop: 10 },
   mMoreText: { fontSize: 11.5, fontWeight: '700', color: T.lilac },

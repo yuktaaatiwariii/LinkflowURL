@@ -11,18 +11,9 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@clerk/expo';
 import { Colors } from '../../../src/constants/colors';
 import { AlertBanner, AppIcon, Card, ResponsiveContainer, Section } from '../../../src/components';
-import {
-  DEFAULT_PREFERENCES,
-  fetchNotificationHistory,
-  fetchNotificationPreferences,
-  updateNotificationPreferences,
-  type NotificationHistoryItem,
-  type NotificationPreferences,
-} from '../../../src/services/notifications';
+import { useNotificationCenter } from '../../../src/hooks/useNotificationCenter';
 import { usePushNotifications } from '../../../src/hooks/usePushNotifications';
 
 interface ToggleRowProps {
@@ -31,501 +22,397 @@ interface ToggleRowProps {
   description: string;
   value: boolean;
   onValueChange: (next: boolean) => void;
-  disabled?: boolean;
-  badge?: string;
 }
 
-function ToggleRow({
-  icon,
-  title,
-  description,
-  value,
-  onValueChange,
-  disabled,
-  badge,
-}: ToggleRowProps) {
+const ICON_MAP: Record<ToggleRowProps['icon'], string> = {
+  chart: '📈',
+  zap: '⚡',
+  clock: '⏰',
+  qr: '📱',
+};
+
+function ToggleRow({ icon, title, description, value, onValueChange }: ToggleRowProps) {
   return (
-    <View style={[styles.toggleRow, disabled && styles.toggleRowDisabled]}>
-      <View style={styles.toggleIcon}>
-        <AppIcon name={icon} size={18} color={disabled ? Colors.textMuted : Colors.accentLight} />
-      </View>
-      <View style={styles.toggleCopy}>
-        <View style={styles.toggleTitleRow}>
-          <Text style={styles.toggleTitle}>{title}</Text>
-          {!!badge && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{badge}</Text>
-            </View>
-          )}
-        </View>
+    <View style={styles.toggleRow}>
+      <View style={styles.toggleIcon}>{ICON_MAP[icon]}</View>
+      <View style={styles.toggleContent}>
+        <Text style={styles.toggleTitle}>{title}</Text>
         <Text style={styles.toggleDescription}>{description}</Text>
       </View>
       <Switch
+        trackColor={{ false: Colors.border, true: Colors.accent }}
+        thumbColor={value ? Colors.accent : Colors.textMuted}
         value={value}
         onValueChange={onValueChange}
-        disabled={disabled}
-        trackColor={{ false: Colors.border, true: Colors.primaryDeep }}
-        thumbColor={value ? Colors.accent : Colors.textMuted}
-        accessibilityLabel={title}
       />
     </View>
   );
 }
 
-const TYPE_LABELS: Record<string, string> = {
-  milestone: 'Click milestone',
-  performance: 'Daily performance',
-  expiration: 'Expiration reminder',
-  qr_activity: 'QR activity',
-};
-
 export default function NotificationsScreen() {
-  const router = useRouter();
-  const { getToken } = useAuth();
-
   const {
-    permission,
-    statusMessage: pushStatus,
-    registerForPushNotifications,
-    refreshPermission,
-  } = usePushNotifications();
+    history,
+    preferences,
+    errorMessage,
+    totalHistory,
+    isLoading,
+    isRefreshing,
+    isError,
+    isUnauthorized,
+    isEmpty,
+    loadHistory,
+    loadPreferences,
+    refreshAll,
+    savePreferences,
+    forceTokenRefresh,
+  } = useNotificationCenter();
 
-  const [preferences, setPreferences] = useState<NotificationPreferences>(DEFAULT_PREFERENCES);
-  const [history, setHistory] = useState<NotificationHistoryItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { permission, registerForPushNotifications } = usePushNotifications();
   const [refreshing, setRefreshing] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [saving, setSaving] = useState(false);
 
-  const loadData = useCallback(
-    async (showSpinner = false) => {
-      if (showSpinner) setLoading(true);
-      try {
-        const token = await getToken();
-        if (!token) {
-          setErrorMessage('Your session has expired. Please sign in again.');
-          return;
-        }
-
-        const [prefsRes, historyRes] = await Promise.all([
-          fetchNotificationPreferences(token),
-          fetchNotificationHistory(token, 50),
-        ]);
-
-        if (prefsRes.error) {
-          setErrorMessage(prefsRes.error);
-        } else if (prefsRes.data?.preferences) {
-          setPreferences(prefsRes.data.preferences);
-          setErrorMessage('');
-        }
-
-        if (historyRes.error) {
-          setErrorMessage(historyRes.error);
-        } else if (Array.isArray(historyRes.data?.notifications)) {
-          setHistory(historyRes.data.notifications);
-        }
-      } catch (err: any) {
-        setErrorMessage(err?.message || 'Unable to load your notification settings.');
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getToken]
-  );
-
+  // Initial data load
   useEffect(() => {
-    loadData(true);
-  }, [loadData]);
+    (async () => {
+      await Promise.allSettled([loadHistory(50), loadPreferences()]);
+    })();
+  }, [loadHistory, loadPreferences]);
 
+  // Handle pull-to-refresh
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await loadData(false);
-    await refreshPermission();
-    setRefreshing(false);
-  }, [loadData, refreshPermission]);
-
-  const persist = useCallback(
-    async (next: NotificationPreferences) => {
-      setPreferences(next);
-      setSaving(true);
-      setErrorMessage('');
-      try {
-        const token = await getToken();
-        if (!token) {
-          setErrorMessage('Your session has expired. Please sign in again.');
-          return;
-        }
-        const res = await updateNotificationPreferences(token, next);
-        if (res.error) {
-          setErrorMessage(res.error);
-          // Re-sync with the server so the UI reflects the stored truth.
-          await loadData(false);
-        } else if (res.data?.preferences) {
-          setPreferences(res.data.preferences);
-          setSuccessMessage('Preferences saved.');
-          setTimeout(() => setSuccessMessage(''), 2500);
-        }
-      } catch (err: any) {
-        setErrorMessage(err?.message || 'Unable to save your preferences.');
-      } finally {
-        setSaving(false);
-      }
-    },
-    [getToken, loadData]
-  );
-
-  const updatePreference = useCallback(
-    (key: keyof NotificationPreferences, value: boolean) => {
-      const next = { ...preferences, [key]: value };
-      // Turning the master switch off disables every category as well.
-      if (key === 'master_enabled' && !value) {
-        next.milestones = false;
-        next.performance = false;
-        next.expiration = false;
-        next.qr_activity = false;
-      } else if (key !== 'master_enabled' && value && !preferences.master_enabled) {
-        next.master_enabled = true;
-      }
-      persist(next);
-    },
-    [persist, preferences]
-  );
-
-  const handleEnablePush = useCallback(async () => {
-    setErrorMessage('');
-    setSuccessMessage('');
-    const ok = await registerForPushNotifications();
-    if (ok) {
-      setSuccessMessage('Notifications are enabled on this device.');
-      setTimeout(() => setSuccessMessage(''), 3000);
+    try {
+      await refreshAll(50);
+    } finally {
+      setRefreshing(false);
     }
-  }, [registerForPushNotifications]);
+  }, [refreshAll]);
 
+  // Handle preference toggle
+  const handlePreferenceChange = useCallback(
+    async (key: keyof typeof preferences, next: boolean) => {
+      try {
+        await savePreferences({ [key]: next });
+      } catch (err: any) {
+        // Error already handled in store (optimistic revert)
+        console.warn('[Notifications] Preference save failed:', err?.message);
+      }
+    },
+    [savePreferences]
+  );
+
+  // Handle retry after error/unauthorized
+  const handleRetry = useCallback(async () => {
+    if (isUnauthorized) {
+      const refreshed = await forceTokenRefresh();
+      if (refreshed) {
+        await Promise.allSettled([loadHistory(50, true), loadPreferences(true)]);
+      }
+    } else {
+      await Promise.allSettled([loadHistory(50, true), loadPreferences(true)]);
+    }
+  }, [isUnauthorized, forceTokenRefresh, loadHistory, loadPreferences]);
+
+  // Render loading state
+  if (isLoading) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.accent} />
+          <Text style={styles.loadingText}>Loading notifications…</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  // Render unauthorized state
+  if (isUnauthorized) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.accent]} />
+          }
+        >
+          <ResponsiveContainer>
+            <View style={styles.emptyState}>
+              <AppIcon name="shield" size={48} color={Colors.error} />
+              <Text style={styles.emptyTitle}>Session Expired</Text>
+              <Text style={styles.emptyDescription}>
+                {errorMessage || 'Your session has expired. Please sign in again.'}
+              </Text>
+              <TouchableOpacity style={styles.retryButton} onPress={handleRetry} activeOpacity={0.8}>
+                <Text style={styles.retryButtonText}>Sign In Again</Text>
+              </TouchableOpacity>
+            </View>
+          </ResponsiveContainer>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // Render error state
+  if (isError) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[Colors.accent]} />
+          }
+        >
+          <ResponsiveContainer>
+            <AlertBanner type="error" message={errorMessage || 'Failed to load notifications'} />
+            <TouchableOpacity style={styles.retryButton} onPress={handleRetry} activeOpacity={0.8}>
+              <Text style={styles.retryButtonText}>Retry</Text>
+            </TouchableOpacity>
+          </ResponsiveContainer>
+        </ScrollView>
+      </SafeAreaView>
+    );
+  }
+
+  // Render success/empty state
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+    <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         refreshControl={
-          <RefreshControl
-            refreshing={refreshing}
-            onRefresh={onRefresh}
-            tintColor={Colors.accent}
-            colors={[Colors.accent]}
-          />
+          <RefreshControl refreshing={refreshing || isRefreshing} onRefresh={onRefresh} colors={[Colors.accent]} />
         }
       >
-        <ResponsiveContainer padding={20}>
-          <TouchableOpacity
-            style={styles.backBtn}
-            onPress={() => router.back()}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-          >
-            <AppIcon name="arrow-left" size={20} color={Colors.textSecondary} />
-          </TouchableOpacity>
+        <ResponsiveContainer>
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.headerTitle}>Notifications</Text>
+            <Text style={styles.headerSubtitle}>
+              {totalHistory > 0 ? `${totalHistory} notification${totalHistory !== 1 ? 's' : ''}` : 'No notifications yet'}
+            </Text>
+          </View>
 
-          <Text style={styles.title}>Notifications</Text>
-          <Text style={styles.subtitle}>
-            Choose what LinkFlow tells you about your links. Settings sync across your devices.
-          </Text>
-
-          {!!errorMessage && (
-            <View style={styles.bannerWrap}>
-              <AlertBanner type="error" message={errorMessage} />
-            </View>
-          )}
-          {!!successMessage && (
-            <View style={styles.bannerWrap}>
-              <AlertBanner type="success" message={successMessage} />
-            </View>
-          )}
-
-          {/* Device permission */}
-          <Card style={styles.permissionCard} variant="elevated">
-            <View style={styles.permissionRow}>
-              <View style={styles.permissionIcon}>
-                <AppIcon
-                  name={permission === 'granted' ? 'check' : 'bell'}
-                  size={20}
-                  color={permission === 'granted' ? Colors.success : Colors.accentLight}
-                />
-              </View>
-              <View style={styles.permissionCopy}>
-                <Text style={styles.permissionTitle}>
-                  {permission === 'granted'
-                    ? 'Push enabled on this device'
-                    : 'Enable push notifications'}
-                </Text>
-                <Text style={styles.permissionText}>
-                  {permission === 'granted'
-                    ? 'LinkFlow can notify you about clicks and expiring links.'
-                    : 'Allow notifications so LinkFlow can tell you when a link reaches a milestone.'}
-                </Text>
-              </View>
-            </View>
-
-            {!!pushStatus && <Text style={styles.pushStatus}>{pushStatus}</Text>}
-
-            {permission !== 'granted' && (
-              <TouchableOpacity
-                style={styles.enableButton}
-                onPress={handleEnablePush}
-                activeOpacity={0.85}
-                accessibilityRole="button"
-              >
-                <AppIcon name="zap" size={17} color="#FFFFFF" />
-                <Text style={styles.enableButtonText}>Enable notifications</Text>
-              </TouchableOpacity>
-            )}
-          </Card>
-
-          {/* Preferences */}
-          <Section title="What should we notify you about?" />
-
-          {loading ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator color={Colors.accent} size="large" />
-              <Text style={styles.loadingText}>Loading your settings…</Text>
-            </View>
-          ) : (
-            <Card style={styles.preferencesCard} variant="elevated">
-              <View style={[styles.toggleRow, styles.masterRow]}>
-                <View style={styles.toggleIcon}>
-                  <AppIcon name="bell" size={18} color={Colors.accentLight} />
+          {/* Push Permission Section */}
+          <Section title="Push Notifications">
+            <Card>
+              <View style={styles.permissionRow}>
+                <View style={styles.permissionInfo}>
+                  <Text style={styles.permissionTitle}>
+                    {permission === 'granted' ? 'Enabled' : permission === 'denied' ? 'Blocked' : 'Not configured'}
+                  </Text>
+                  <Text style={styles.permissionDescription}>
+                    {permission === 'granted'
+                      ? 'You will receive push notifications for important updates.'
+                      : permission === 'denied'
+                      ? 'Enable in device settings to receive push notifications.'
+                      : 'Tap to enable push notifications for link milestones and alerts.'}
+                  </Text>
                 </View>
-                <View style={styles.toggleCopy}>
-                  <Text style={styles.toggleTitle}>All notifications</Text>
+                {permission !== 'granted' && (
+                  <TouchableOpacity
+                    style={[styles.permissionButton, permission === 'denied' && styles.permissionButtonSecondary]}
+                    onPress={registerForPushNotifications}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.permissionButtonText}>
+                      {permission === 'denied' ? 'Open Settings' : 'Enable'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            </Card>
+          </Section>
+
+          {/* Preferences Section */}
+          <Section title="Notification Preferences">
+            <Card>
+              <ToggleRow
+                icon="chart"
+                title="Milestones"
+                description="Link click milestones (100, 1K, 10K…)"
+                value={preferences.milestones}
+                onValueChange={(v) => handlePreferenceChange('milestones', v)}
+              />
+              <View style={styles.divider} />
+              <ToggleRow
+                icon="zap"
+                title="Performance Alerts"
+                description="Sudden traffic spikes or drops"
+                value={preferences.performance}
+                onValueChange={(v) => handlePreferenceChange('performance', v)}
+              />
+              <View style={styles.divider} />
+              <ToggleRow
+                icon="clock"
+                title="Link Expiration"
+                description="Links expiring in 24 hours"
+                value={preferences.expiration}
+                onValueChange={(v) => handlePreferenceChange('expiration', v)}
+              />
+              <View style={styles.divider} />
+              <ToggleRow
+                icon="qr"
+                title="QR Activity"
+                description="QR code scan notifications"
+                value={preferences.qr_activity}
+                onValueChange={(v) => handlePreferenceChange('qr_activity', v)}
+              />
+            </Card>
+          </Section>
+
+          {/* Master Toggle */}
+          <Section title="Master Control">
+            <Card>
+              <View style={styles.toggleRow}>
+                <View style={styles.toggleIcon}>🔔</View>
+                <View style={styles.toggleContent}>
+                  <Text style={styles.toggleTitle}>All Notifications</Text>
                   <Text style={styles.toggleDescription}>
-                    Master switch for every notification type.
+                    Master switch for all notification types
                   </Text>
                 </View>
                 <Switch
-                  value={preferences.master_enabled}
-                  onValueChange={(next) => updatePreference('master_enabled', next)}
-                  trackColor={{ false: Colors.border, true: Colors.primaryDeep }}
+                  trackColor={{ false: Colors.border, true: Colors.accent }}
                   thumbColor={preferences.master_enabled ? Colors.accent : Colors.textMuted}
-                  accessibilityLabel="All notifications"
+                  value={preferences.master_enabled}
+                  onValueChange={(v) => handlePreferenceChange('master_enabled', v)}
                 />
               </View>
-
-              <View style={styles.divider} />
-
-              <ToggleRow
-                icon="zap"
-                title="Link click milestones"
-                description="Get a push when a link crosses 10, 50, 100, 500, 1,000 or 10,000 clicks."
-                value={preferences.milestones}
-                onValueChange={(next) => updatePreference('milestones', next)}
-                disabled={!preferences.master_enabled}
-              />
-
-              <ToggleRow
-                icon="chart"
-                title="Daily performance"
-                description="Get a daily summary when a link receives 100 or more new clicks."
-                value={preferences.performance}
-                onValueChange={(next) => updatePreference('performance', next)}
-                disabled={!preferences.master_enabled}
-              />
-
-              <ToggleRow
-                icon="clock"
-                title="Expiration reminders"
-                description="Get a reminder the day before one of your links expires."
-                value={preferences.expiration}
-                onValueChange={(next) => updatePreference('expiration', next)}
-                disabled={!preferences.master_enabled}
-              />
-
-              <ToggleRow
-                icon="qr"
-                title="QR activity"
-                description="Notify when a QR code is scanned."
-                value={preferences.qr_activity}
-                onValueChange={(next) => updatePreference('qr_activity', next)}
-                disabled={!preferences.master_enabled}
-                badge="Soon"
-              />
-
-              <Text style={styles.qrNote}>
-                QR scans are not tracked yet — LinkFlow currently only measures clicks on the link
-                a QR code points to. This switch is stored and will start working as soon as scan
-                tracking is available.
-              </Text>
-
-              {saving && <Text style={styles.savingText}>Saving…</Text>}
             </Card>
-          )}
+          </Section>
 
-          {/* History */}
-          <Section title="Recent notifications" />
-
-          {history.length === 0 ? (
-            <Card style={styles.emptyCard} variant="secondary">
-              <AppIcon name="bell" size={26} color={Colors.textMuted} />
-              <Text style={styles.emptyTitle}>No notifications yet</Text>
-              <Text style={styles.emptyText}>
-                Milestone, performance and expiration notifications will appear here.
-              </Text>
-            </Card>
-          ) : (
-            <View style={styles.historyList}>
-              {history.map((item) => (
-                <Card key={item.id} style={styles.historyCard} variant="elevated">
-                  <View style={styles.historyHeader}>
-                    <View style={styles.historyIcon}>
-                      <AppIcon
-                        name={
-                          item.type === 'milestone'
-                            ? 'zap'
-                            : item.type === 'performance'
-                              ? 'chart'
-                              : item.type === 'expiration'
-                                ? 'clock'
-                                : 'qr'
-                        }
-                        size={16}
-                        color={Colors.accentLight}
-                      />
+          {/* Notification History */}
+          <Section title="History">
+            {isEmpty ? (
+              <Card style={styles.emptyCard}>
+                <View style={styles.emptyState}>
+                  <AppIcon name="bell" size={48} color={Colors.textMuted} />
+                  <Text style={styles.emptyTitle}>No notifications yet</Text>
+                  <Text style={styles.emptyDescription}>
+                    Notifications will appear here when your links hit milestones,
+                    experience traffic changes, or approach expiration.
+                  </Text>
+                </View>
+              </Card>
+            ) : (
+              <>
+                {history.map((notification) => (
+                  <Card key={notification.id} style={styles.historyCard}>
+                    <View style={styles.historyHeader}>
+                      <View style={styles.historyIconContainer}>
+                        <Text style={styles.historyIcon}>
+                          {notification.type === 'milestone'
+                            ? '📈'
+                            : notification.type === 'performance'
+                            ? '⚡'
+                            : notification.type === 'expiration'
+                            ? '⏰'
+                            : '📱'}
+                        </Text>
+                      </View>
+                      <View style={styles.historyContent}>
+                        <Text style={styles.historyTitle}>{notification.title}</Text>
+                        <Text style={styles.historyBody}>{notification.body}</Text>
+                      </View>
+                      <Text style={styles.historyTime}>
+                        {new Date(notification.created_at).toLocaleDateString(undefined, {
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit',
+                        })}
+                      </Text>
                     </View>
-                    <Text style={styles.historyType}>
-                      {TYPE_LABELS[item.type] || 'Notification'}
-                    </Text>
-                    <Text style={styles.historyDate}>{formatDate(item.created_at)}</Text>
-                  </View>
-                  <Text style={styles.historyTitle}>{item.title}</Text>
-                  <Text style={styles.historyBody}>{item.body}</Text>
-                </Card>
-              ))}
-            </View>
-          )}
+                  </Card>
+                ))}
+                {history.length > 0 && history.length < totalHistory && (
+                  <TouchableOpacity style={styles.loadMoreButton} onPress={() => loadHistory(totalHistory, true)} activeOpacity={0.8}>
+                    <Text style={styles.loadMoreButtonText}>Load more ({totalHistory} total)</Text>
+                  </TouchableOpacity>
+                )}
+              </>
+            )}
+          </Section>
         </ResponsiveContainer>
       </ScrollView>
     </SafeAreaView>
   );
 }
 
-function formatDate(value: string): string {
-  try {
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return '';
-    return date.toLocaleDateString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-    });
-  } catch {
-    return '';
-  }
-}
-
 const styles = StyleSheet.create({
-  safeArea: {
+  container: {
     flex: 1,
     backgroundColor: Colors.background,
   },
   scrollContent: {
+    flexGrow: 1,
     paddingBottom: 40,
   },
-  backBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: Colors.surface,
-    borderWidth: 1,
-    borderColor: Colors.border,
+  loadingContainer: {
+    flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 20,
-    alignSelf: 'flex-start',
+    padding: 24,
   },
-  title: {
-    fontSize: 26,
-    fontWeight: '800',
+  loadingText: {
+    marginTop: 12,
+    color: Colors.textMuted,
+    fontSize: 16,
+  },
+  header: {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 4,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: '700',
     color: Colors.textPrimary,
-    marginBottom: 6,
   },
-  subtitle: {
-    fontSize: 14.5,
-    color: Colors.textSecondary,
-    lineHeight: 21,
-    marginBottom: 22,
-  },
-  bannerWrap: {
-    marginBottom: 16,
-  },
-  permissionCard: {
-    padding: 16,
-    gap: 12,
-    marginBottom: 24,
+  headerSubtitle: {
+    marginTop: 4,
+    fontSize: 14,
+    color: Colors.textMuted,
   },
   permissionRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: 12,
   },
-  permissionIcon: {
-    width: 42,
-    height: 42,
-    borderRadius: 14,
-    backgroundColor: Colors.surfaceSecondary,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  permissionCopy: {
+  permissionInfo: {
     flex: 1,
-    gap: 3,
   },
   permissionTitle: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
     color: Colors.textPrimary,
   },
-  permissionText: {
+  permissionDescription: {
+    marginTop: 2,
     fontSize: 13,
-    color: Colors.textSecondary,
-    lineHeight: 19,
-  },
-  pushStatus: {
-    fontSize: 12.5,
-    color: Colors.warning,
+    color: Colors.textMuted,
     lineHeight: 18,
   },
-  enableButton: {
-    flexDirection: 'row',
+  permissionButton: {
+    backgroundColor: Colors.accent,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 8,
+    minWidth: 80,
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    backgroundColor: Colors.primary,
-    borderRadius: 12,
-    minHeight: 48,
   },
-  enableButtonText: {
-    color: '#FFFFFF',
-    fontSize: 14.5,
-    fontWeight: '700',
-  },
-  preferencesCard: {
-    padding: 16,
-    marginBottom: 24,
-  },
-  masterRow: {
+  permissionButtonSecondary: {
     backgroundColor: Colors.surfaceSecondary,
-    borderRadius: 14,
-    padding: 12,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: Colors.border,
   },
-  divider: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginVertical: 14,
+  permissionButtonText: {
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    fontSize: 14,
   },
   toggleRow: {
     flexDirection: 'row',
@@ -533,129 +420,101 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingVertical: 12,
   },
-  toggleRowDisabled: {
-    opacity: 0.55,
-  },
   toggleIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: Colors.surfaceSecondary,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    // fontSize is for Text; this View just centers the emoji
   },
-  toggleCopy: {
+  toggleContent: {
     flex: 1,
-    gap: 3,
-  },
-  toggleTitleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
   },
   toggleTitle: {
-    fontSize: 14.5,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '500',
     color: Colors.textPrimary,
   },
   toggleDescription: {
-    fontSize: 12.5,
-    color: Colors.textSecondary,
-    lineHeight: 18,
-  },
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 999,
-    backgroundColor: Colors.surfaceSecondary,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-  },
-  badgeText: {
-    fontSize: 10.5,
-    fontWeight: '700',
-    color: Colors.accentLight,
-    textTransform: 'uppercase',
-    letterSpacing: 0.6,
-  },
-  qrNote: {
-    marginTop: 8,
-    fontSize: 12,
-    color: Colors.textMuted,
-    lineHeight: 18,
-  },
-  savingText: {
-    marginTop: 10,
-    fontSize: 12.5,
-    color: Colors.textMuted,
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    paddingVertical: 28,
-    gap: 10,
-  },
-  loadingText: {
+    marginTop: 2,
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: Colors.textMuted,
   },
-  emptyCard: {
-    alignItems: 'center',
-    padding: 26,
-    gap: 8,
-  },
-  emptyTitle: {
-    fontSize: 15.5,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-  },
-  emptyText: {
-    fontSize: 13.5,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  historyList: {
-    gap: 12,
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginHorizontal: 12,
   },
   historyCard: {
-    padding: 15,
-    gap: 8,
+    marginBottom: 8,
   },
   historyHeader: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    alignItems: 'flex-start',
+    gap: 12,
+  },
+  historyIconContainer: {
+    marginTop: 2,
   },
   historyIcon: {
-    width: 28,
-    height: 28,
-    borderRadius: 9,
-    backgroundColor: Colors.surfaceSecondary,
-    alignItems: 'center',
-    justifyContent: 'center',
+    fontSize: 20,
   },
-  historyType: {
+  historyContent: {
     flex: 1,
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.accentLight,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  historyDate: {
-    fontSize: 11.5,
-    color: Colors.textMuted,
+    minWidth: 0,
   },
   historyTitle: {
-    fontSize: 14.5,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '600',
     color: Colors.textPrimary,
   },
   historyBody: {
+    marginTop: 2,
     fontSize: 13,
-    color: Colors.textSecondary,
-    lineHeight: 19,
+    color: Colors.textMuted,
+    lineHeight: 18,
+  },
+  historyTime: {
+    marginTop: 4,
+    fontSize: 12,
+    color: Colors.textMuted,
+  },
+  emptyCard: {
+    paddingVertical: 32,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingHorizontal: 24,
+  },
+  emptyTitle: {
+    marginTop: 12,
+    fontSize: 18,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
+  emptyDescription: {
+    marginTop: 8,
+    fontSize: 14,
+    color: Colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  retryButton: {
+    marginTop: 16,
+    backgroundColor: Colors.accent,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: Colors.textPrimary,
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  loadMoreButton: {
+    marginTop: 12,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  loadMoreButtonText: {
+    color: Colors.accent,
+    fontWeight: '600',
+    fontSize: 14,
   },
 });

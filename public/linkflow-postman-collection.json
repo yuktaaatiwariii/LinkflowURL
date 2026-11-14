@@ -1,0 +1,1030 @@
+{
+  "info": {
+    "name": "LinkFlow API",
+    "description": "Import this collection, set the `apiKey` collection variable to a test key from the LinkFlow Developer Dashboard, and run any request.\n\nAuthentication uses the X-API-Key header. Never commit a real key to source control.\n\nQR scan analytics are not supported. QR analytics report linked-link clicks only.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Links",
+      "item": [
+        {
+          "name": "GET /api/v1/links — List links",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response is JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/links?limit=10&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "links"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Returns the authenticated developer's short links, newest first. Pagination is offset-based. The total field is the full number of links owned by the developer, not just the current page.\n\nRequired scope: links:read"
+          },
+          "response": [
+            {
+              "name": "200 List links",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{apiKey}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/links?limit=10&offset=0",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "links"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "offset",
+                      "value": "0"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Links retrieved successfully\",\n  \"data\": {\n    \"links\": [\n      {\n        \"id\": \"0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21\",\n        \"originalUrl\": \"https://example.com/launch\",\n        \"shortUrl\": \"https://linkflowurl.com/launch\",\n        \"shortCode\": \"launch\",\n        \"customAlias\": \"launch\",\n        \"title\": \"Launch page\",\n        \"isActive\": true,\n        \"expiresAt\": null,\n        \"clicks\": 42,\n        \"createdAt\": \"2026-11-01T09:12:45.000Z\",\n        \"updatedAt\": \"2026-11-01T09:12:45.000Z\"\n      }\n    ],\n    \"total\": 42,\n    \"limit\": 10,\n    \"offset\": 0\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /api/v1/links — Create a link",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response is JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/links",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "links"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"originalUrl\": \"https://example.com/launch\",\n  \"title\": \"Launch page\",\n  \"customAlias\": \"launch\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Creates a short link. Ownership is always taken from the API key; any userId or user_id in the body is ignored. If customAlias is omitted, LinkFlow generates a short code.\n\nRequired scope: links:write"
+          },
+          "response": [
+            {
+              "name": "201 Create a link",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{apiKey}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/links",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "links"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Short link created successfully\",\n  \"data\": {\n    \"id\": \"0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21\",\n    \"originalUrl\": \"https://example.com/launch\",\n    \"shortUrl\": \"https://linkflowurl.com/launch\",\n    \"shortCode\": \"launch\",\n    \"customAlias\": \"launch\",\n    \"title\": \"Launch page\",\n    \"isActive\": true,\n    \"expiresAt\": null,\n    \"clicks\": 0,\n    \"createdAt\": \"2026-11-01T09:12:45.000Z\",\n    \"updatedAt\": \"2026-11-01T09:12:45.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/links/:id — Retrieve a link",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response is JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/links/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "links",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "YOUR_ID"
+                }
+              ]
+            },
+            "description": "Returns one link owned by the authenticated developer. Another developer's link is reported as 404, never 403.\n\nRequired scope: links:read"
+          },
+          "response": [
+            {
+              "name": "200 Retrieve a link",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{apiKey}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/links/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "links",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "YOUR_ID"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Link retrieved successfully\",\n  \"data\": {\n    \"id\": \"0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21\",\n    \"originalUrl\": \"https://example.com/launch\",\n    \"shortUrl\": \"https://linkflowurl.com/launch\",\n    \"shortCode\": \"launch\",\n    \"customAlias\": \"launch\",\n    \"title\": \"Launch page\",\n    \"isActive\": true,\n    \"expiresAt\": null,\n    \"clicks\": 42,\n    \"createdAt\": \"2026-11-01T09:12:45.000Z\",\n    \"updatedAt\": \"2026-11-01T09:12:45.000Z\"\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "DELETE /api/v1/links/:id — Delete a link",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response is JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/links/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "links",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "YOUR_ID"
+                }
+              ]
+            },
+            "description": "Permanently deletes a link owned by the authenticated developer. The response contains only the deleted id.\n\nRequired scope: links:delete"
+          },
+          "response": [
+            {
+              "name": "200 Delete a link",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{apiKey}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/links/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "links",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "YOUR_ID"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Link deleted successfully\",\n  \"data\": {\n    \"id\": \"0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "GET /api/v1/links/:id/analytics — Link click analytics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response is JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/links/:id/analytics?days=7",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "links",
+                ":id",
+                "analytics"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "7"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "YOUR_ID"
+                }
+              ]
+            },
+            "description": "Returns the link, its all-time click count and a zero-filled daily click series for the requested window. totalClicks is the link's lifetime count; daily covers only the requested number of days.\n\nRequired scope: analytics:read"
+          },
+          "response": [
+            {
+              "name": "200 Link click analytics",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{apiKey}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/links/:id/analytics?days=7",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "links",
+                    ":id",
+                    "analytics"
+                  ],
+                  "query": [
+                    {
+                      "key": "days",
+                      "value": "7"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "YOUR_ID"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Link analytics retrieved successfully\",\n  \"data\": {\n    \"link\": {\n      \"id\": \"0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21\",\n      \"originalUrl\": \"https://example.com/launch\",\n      \"shortUrl\": \"https://linkflowurl.com/launch\",\n      \"shortCode\": \"launch\",\n      \"customAlias\": \"launch\",\n      \"title\": \"Launch page\",\n      \"isActive\": true,\n      \"expiresAt\": null,\n      \"clicks\": 42,\n      \"createdAt\": \"2026-11-01T09:12:45.000Z\",\n      \"updatedAt\": \"2026-11-01T09:12:45.000Z\"\n    },\n    \"totalClicks\": 42,\n    \"range\": {\n      \"days\": 7,\n      \"since\": \"2026-11-08\",\n      \"until\": \"2026-11-14\"\n    },\n    \"daily\": [\n      {\n        \"date\": \"2026-11-08\",\n        \"clicks\": 3\n      },\n      {\n        \"date\": \"2026-11-09\",\n        \"clicks\": 0\n      },\n      {\n        \"date\": \"2026-11-10\",\n        \"clicks\": 9\n      },\n      {\n        \"date\": \"2026-11-11\",\n        \"clicks\": 4\n      },\n      {\n        \"date\": \"2026-11-12\",\n        \"clicks\": 12\n      },\n      {\n        \"date\": \"2026-11-13\",\n        \"clicks\": 7\n      },\n      {\n        \"date\": \"2026-11-14\",\n        \"clicks\": 7\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/qr/:id/analytics — QR analytics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response is JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/qr/:id/analytics?days=7",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "qr",
+                ":id",
+                "analytics"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "7"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "YOUR_ID"
+                }
+              ]
+            },
+            "description": "QR scans are not tracked. For a QR created from a short link, this endpoint reports that link's click analytics with tracking set to linked-link-clicks. For a standalone QR code it returns supported: false.\n\nRequired scope: analytics:read"
+          },
+          "response": [
+            {
+              "name": "200 QR analytics",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{apiKey}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/qr/:id/analytics?days=7",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "qr",
+                    ":id",
+                    "analytics"
+                  ],
+                  "query": [
+                    {
+                      "key": "days",
+                      "value": "7"
+                    }
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "YOUR_ID"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"QR code analytics retrieved successfully\",\n  \"data\": {\n    \"qr\": {\n      \"id\": \"7f4d2b1c-9e8a-4b3c-8d2e-5a6b7c8d9e0f\",\n      \"title\": \"Launch QR\",\n      \"targetUrl\": \"https://linkflowurl.com/launch\",\n      \"linkId\": \"0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21\",\n      \"createdAt\": \"2026-11-02T10:00:00.000Z\",\n      \"updatedAt\": \"2026-11-02T10:00:00.000Z\"\n    },\n    \"supported\": true,\n    \"tracking\": \"linked-link-clicks\",\n    \"link\": {\n      \"id\": \"0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21\",\n      \"originalUrl\": \"https://example.com/launch\",\n      \"shortUrl\": \"https://linkflowurl.com/launch\",\n      \"shortCode\": \"launch\",\n      \"customAlias\": \"launch\",\n      \"title\": \"Launch page\",\n      \"isActive\": true,\n      \"expiresAt\": null,\n      \"clicks\": 42,\n      \"createdAt\": \"2026-11-01T09:12:45.000Z\",\n      \"updatedAt\": \"2026-11-01T09:12:45.000Z\"\n    },\n    \"totalClicks\": 42,\n    \"range\": {\n      \"days\": 7,\n      \"since\": \"2026-11-08\",\n      \"until\": \"2026-11-14\"\n    },\n    \"daily\": [\n      {\n        \"date\": \"2026-11-08\",\n        \"clicks\": 3\n      },\n      {\n        \"date\": \"2026-11-09\",\n        \"clicks\": 0\n      },\n      {\n        \"date\": \"2026-11-10\",\n        \"clicks\": 9\n      },\n      {\n        \"date\": \"2026-11-11\",\n        \"clicks\": 4\n      },\n      {\n        \"date\": \"2026-11-12\",\n        \"clicks\": 12\n      },\n      {\n        \"date\": \"2026-11-13\",\n        \"clicks\": 7\n      },\n      {\n        \"date\": \"2026-11-14\",\n        \"clicks\": 7\n      }\n    ]\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/analytics/overview — Analytics overview",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response is JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/analytics/overview?days=7",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "analytics",
+                "overview"
+              ],
+              "query": [
+                {
+                  "key": "days",
+                  "value": "7"
+                }
+              ]
+            },
+            "description": "Aggregates data LinkFlow already records: link counts, total clicks, QR counts and a per-day click series summed across the developer's links.\n\nRequired scope: analytics:read"
+          },
+          "response": [
+            {
+              "name": "200 Analytics overview",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{apiKey}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/analytics/overview?days=7",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "analytics",
+                    "overview"
+                  ],
+                  "query": [
+                    {
+                      "key": "days",
+                      "value": "7"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"Analytics overview retrieved successfully\",\n  \"data\": {\n    \"totals\": {\n      \"links\": 12,\n      \"activeLinks\": 11,\n      \"clicks\": 482,\n      \"qrCodes\": 4,\n      \"linkedQrCodes\": 3\n    },\n    \"range\": {\n      \"days\": 7,\n      \"since\": \"2026-11-08\",\n      \"until\": \"2026-11-14\"\n    },\n    \"daily\": [\n      {\n        \"date\": \"2026-11-08\",\n        \"clicks\": 12\n      },\n      {\n        \"date\": \"2026-11-09\",\n        \"clicks\": 8\n      },\n      {\n        \"date\": \"2026-11-10\",\n        \"clicks\": 31\n      },\n      {\n        \"date\": \"2026-11-11\",\n        \"clicks\": 22\n      },\n      {\n        \"date\": \"2026-11-12\",\n        \"clicks\": 41\n      },\n      {\n        \"date\": \"2026-11-13\",\n        \"clicks\": 27\n      },\n      {\n        \"date\": \"2026-11-14\",\n        \"clicks\": 19\n      }\n    ],\n    \"mostClickedLink\": {\n      \"id\": \"0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21\",\n      \"originalUrl\": \"https://example.com/launch\",\n      \"shortUrl\": \"https://linkflowurl.com/launch\",\n      \"shortCode\": \"launch\",\n      \"customAlias\": \"launch\",\n      \"title\": \"Launch page\",\n      \"isActive\": true,\n      \"expiresAt\": null,\n      \"clicks\": 142,\n      \"createdAt\": \"2026-11-01T09:12:45.000Z\",\n      \"updatedAt\": \"2026-11-01T09:12:45.000Z\"\n    },\n    \"recentQrCodes\": [\n      {\n        \"id\": \"7f4d2b1c-9e8a-4b3c-8d2e-5a6b7c8d9e0f\",\n        \"title\": \"Launch QR\",\n        \"targetUrl\": \"https://linkflowurl.com/launch\",\n        \"linkId\": \"0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21\",\n        \"createdAt\": \"2026-11-02T10:00:00.000Z\",\n        \"updatedAt\": \"2026-11-02T10:00:00.000Z\"\n      }\n    ]\n  }\n}"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "QR codes",
+      "item": [
+        {
+          "name": "GET /api/v1/qr — List QR codes",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response is JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/qr?limit=10&offset=0",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "qr"
+              ],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            },
+            "description": "Returns QR metadata, newest first, with the same offset pagination as links. Image data is not included in list responses.\n\nRequired scope: qr:read"
+          },
+          "response": [
+            {
+              "name": "200 List QR codes",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{apiKey}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/qr?limit=10&offset=0",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "qr"
+                  ],
+                  "query": [
+                    {
+                      "key": "limit",
+                      "value": "10"
+                    },
+                    {
+                      "key": "offset",
+                      "value": "0"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"QR codes retrieved successfully\",\n  \"data\": {\n    \"qrs\": [\n      {\n        \"id\": \"7f4d2b1c-9e8a-4b3c-8d2e-5a6b7c8d9e0f\",\n        \"title\": \"Launch QR\",\n        \"targetUrl\": \"https://linkflowurl.com/launch\",\n        \"linkId\": \"0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21\",\n        \"createdAt\": \"2026-11-02T10:00:00.000Z\",\n        \"updatedAt\": \"2026-11-02T10:00:00.000Z\"\n      }\n    ],\n    \"total\": 1,\n    \"limit\": 10,\n    \"offset\": 0\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "POST /api/v1/qr — Create a QR code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response is JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/qr",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "qr"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"linkId\": \"0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21\",\n  \"title\": \"Launch QR\",\n  \"image\": {\n    \"size\": 512,\n    \"margin\": 2,\n    \"errorCorrectionLevel\": \"M\",\n    \"dark\": \"#000000\",\n    \"light\": \"#FFFFFF\"\n  }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "Creates QR metadata and returns a PNG data URI. Provide targetUrl, or provide linkId to encode that short link's public URL. If both are supplied, targetUrl wins.\n\nRequired scope: qr:write"
+          },
+          "response": [
+            {
+              "name": "201 Create a QR code",
+              "originalRequest": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{apiKey}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/qr",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "qr"
+                  ]
+                }
+              },
+              "status": "Created",
+              "code": 201,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"QR code created successfully\",\n  \"data\": {\n    \"qr\": {\n      \"id\": \"7f4d2b1c-9e8a-4b3c-8d2e-5a6b7c8d9e0f\",\n      \"title\": \"Launch QR\",\n      \"targetUrl\": \"https://linkflowurl.com/launch\",\n      \"linkId\": \"0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21\",\n      \"createdAt\": \"2026-11-02T10:00:00.000Z\",\n      \"updatedAt\": \"2026-11-02T10:00:00.000Z\"\n    },\n    \"image\": {\n      \"mimeType\": \"image/png\",\n      \"encoding\": \"data-uri\",\n      \"dataUrl\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUg...\",\n      \"width\": 512,\n      \"margin\": 2,\n      \"errorCorrectionLevel\": \"M\",\n      \"dark\": \"#000000\",\n      \"light\": \"#FFFFFF\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "GET /api/v1/qr/:id — Retrieve a QR code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response is JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/qr/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "qr",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "YOUR_ID"
+                }
+              ]
+            },
+            "description": "Returns QR metadata and a freshly rendered PNG data URI using the default image options (512 px, margin 2, ECC M, black on white).\n\nRequired scope: qr:read"
+          },
+          "response": [
+            {
+              "name": "200 Retrieve a QR code",
+              "originalRequest": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{apiKey}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/qr/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "qr",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "YOUR_ID"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"QR code retrieved successfully\",\n  \"data\": {\n    \"qr\": {\n      \"id\": \"7f4d2b1c-9e8a-4b3c-8d2e-5a6b7c8d9e0f\",\n      \"title\": \"Launch QR\",\n      \"targetUrl\": \"https://linkflowurl.com/launch\",\n      \"linkId\": \"0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21\",\n      \"createdAt\": \"2026-11-02T10:00:00.000Z\",\n      \"updatedAt\": \"2026-11-02T10:00:00.000Z\"\n    },\n    \"image\": {\n      \"mimeType\": \"image/png\",\n      \"encoding\": \"data-uri\",\n      \"dataUrl\": \"data:image/png;base64,iVBORw0KGgoAAAANSUhEUg...\",\n      \"width\": 512,\n      \"margin\": 2,\n      \"errorCorrectionLevel\": \"M\",\n      \"dark\": \"#000000\",\n      \"light\": \"#FFFFFF\"\n    }\n  }\n}"
+            }
+          ]
+        },
+        {
+          "name": "DELETE /api/v1/qr/:id — Delete a QR code",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Response is JSON\", function () {",
+                  "  pm.response.to.have.jsonBody();",
+                  "});"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "X-API-Key",
+                "value": "{{apiKey}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/qr/:id",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "qr",
+                ":id"
+              ],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "YOUR_ID"
+                }
+              ]
+            },
+            "description": "Deletes QR metadata owned by the authenticated developer. The linked short link, if any, is not deleted.\n\nRequired scope: qr:delete"
+          },
+          "response": [
+            {
+              "name": "200 Delete a QR code",
+              "originalRequest": {
+                "method": "DELETE",
+                "header": [
+                  {
+                    "key": "X-API-Key",
+                    "value": "{{apiKey}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/qr/:id",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "qr",
+                    ":id"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "YOUR_ID"
+                    }
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true,\n  \"message\": \"QR code deleted successfully\",\n  \"data\": {\n    \"id\": \"7f4d2b1c-9e8a-4b3c-8d2e-5a6b7c8d9e0f\"\n  }\n}"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.linkflowurl.com",
+      "type": "string"
+    },
+    {
+      "key": "apiKey",
+      "value": "YOUR_API_KEY",
+      "type": "string"
+    }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "X-API-Key",
+        "value": "{{apiKey}}",
+        "in": "header"
+      }
+    ]
+  }
+}

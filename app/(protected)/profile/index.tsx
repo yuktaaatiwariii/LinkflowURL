@@ -134,6 +134,15 @@ export default function ProfileScreen() {
                 <Text style={styles.settingsTitle}>Notifications</Text>
                 <AppIcon name="arrow-left" size={16} color={Colors.textMuted} />
               </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.settingsItem}
+                onPress={() => router.push('/(protected)/developer' as any)}
+              >
+                <AppIcon name="zap" size={20} color={Colors.textSecondary} />
+                <Text style={styles.settingsTitle}>Developer Dashboard</Text>
+                <AppIcon name="arrow-left" size={16} color={Colors.textMuted} />
+              </TouchableOpacity>
             </View>
 
             <View style={styles.divider} />
@@ -185,6 +194,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 14,
     marginBottom: 24,
   },
   backBtn: {
@@ -231,7 +241,7 @@ const styles = StyleSheet.create({
   avatarInitial: {
     fontSize: 24,
     fontWeight: '800',
-    color: Colors.textPrimary,
+    color: Colors.background,
   },
   profileInfo: {
     flex: 1,
@@ -263,6 +273,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    gap: 12,
     paddingVertical: 14,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border,

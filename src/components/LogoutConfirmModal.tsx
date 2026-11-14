@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 16,
     alignItems: 'center',
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.error,
   } as ViewStyle,
   confirmButtonLoading: {
     opacity: 0.6,

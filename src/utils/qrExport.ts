@@ -3,8 +3,8 @@ import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 
-/** On-brand, high-contrast QR colours (dark enough for reliable scanning). */
-export const QR_DARK = '#3B0764';
+/** On-brand, high-contrast QR colours (black on white for reliable scanning). */
+export const QR_DARK = '#000000';
 export const QR_LIGHT = '#FFFFFF';
 
 /** Resolution used for exported/shared PNG files (independent of on-screen size). */

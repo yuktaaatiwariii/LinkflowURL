@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
+import { refreshSessionToken, getSessionToken } from './authToken';
 
 /**
  * Central LinkFlow API configuration.
@@ -209,14 +210,14 @@ function logApiConfigOnce(baseUrl: string) {
 }
 
 /**
- * Single authenticated fetch wrapper used by every screen/service.
- * Attaches the Clerk bearer token, enforces a bounded timeout, logs request
- * metadata (never tokens or payloads), and maps failures to safe messages.
+ * Internal fetch without 401 retry logic (used by the retry itself).
+ * Composed with external AbortSignal for proper cancellation.
  */
-export async function authenticatedFetch<T = any>(
+async function fetchRaw<T = any>(
   path: string,
   token: string | null | undefined,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  externalSignal?: AbortSignal
 ): Promise<ApiResponse<T>> {
   const baseUrl = getApiBaseUrl();
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
@@ -234,8 +235,21 @@ export async function authenticatedFetch<T = any>(
     headers['Authorization'] = `Bearer ${token}`;
   }
 
+  // Compose abort signals: external (caller) + internal timeout
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+
+  // If external signal provided, listen for its abort
+  let externalAbortHandler: (() => void) | null = null;
+  if (externalSignal) {
+    if (externalSignal.aborted) {
+      controller.abort();
+    } else {
+      externalAbortHandler = () => controller.abort();
+      externalSignal.addEventListener('abort', externalAbortHandler);
+    }
+  }
+
   const startedAt = Date.now();
 
   try {
@@ -303,7 +317,57 @@ export async function authenticatedFetch<T = any>(
     };
   } finally {
     clearTimeout(timeoutId);
+    if (externalAbortHandler && externalSignal) {
+      externalSignal.removeEventListener('abort', externalAbortHandler);
+    }
   }
+}
+
+/**
+ * Single authenticated fetch wrapper used by every screen/service.
+ * Attaches the Clerk bearer token, enforces a bounded timeout, logs request
+ * metadata (never tokens or payloads), and maps failures to safe messages.
+ *
+ * On 401: forces a token refresh (single-flight across concurrent callers),
+ * retries the original request ONCE with the new token.
+ * Never retries on network errors, never signs out automatically.
+ */
+export async function authenticatedFetch<T = any>(
+  path: string,
+  token: string | null | undefined,
+  options: RequestInit = {}
+): Promise<ApiResponse<T>> {
+  // No token = no auth, don't attempt refresh
+  if (!token) {
+    return fetchRaw(path, token, options);
+  }
+
+  let attemptedRefresh = false;
+
+  // Use a closure to allow one retry
+  async function attempt(currentToken: string): Promise<ApiResponse<T>> {
+    const res = await fetchRaw(path, currentToken, options);
+
+    // 401 with a token we sent -> try forced refresh once
+    if (res.status === 401 && !attemptedRefresh) {
+      attemptedRefresh = true;
+      const refreshResult = await refreshSessionToken();
+
+      if (refreshResult === 'refreshed') {
+        // Get the fresh token and retry ONCE
+        const newToken = await getSessionToken({ skipCache: true });
+        if (newToken) {
+          return attempt(newToken);
+        }
+      }
+      // refresh failed or no session -> return original 401
+      return res;
+    }
+
+    return res;
+  }
+
+  return attempt(token);
 }
 
 export async function syncUserWithBackend(token: string, email?: string, fullName?: string | null) {

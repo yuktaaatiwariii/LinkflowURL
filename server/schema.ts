@@ -117,6 +117,97 @@ CREATE TABLE IF NOT EXISTS link_daily_clicks (
   clicks INTEGER DEFAULT 0,
   PRIMARY KEY (link_id, day)
 );
+
+-- Developer API keys (Phase 2). Only an HMAC-SHA256 digest of the secret is
+-- stored; key_prefix is a non-secret lookup identifier. Revoked rows are
+-- retained as an audit trail and reference the key they were rotated from.
+CREATE TABLE IF NOT EXISTS developer_api_keys (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  project_name VARCHAR(100) NOT NULL,
+  key_prefix VARCHAR(32) NOT NULL,
+  key_hash VARCHAR(64) NOT NULL,
+  environment VARCHAR(10) NOT NULL CHECK (environment IN ('test', 'live')),
+  scopes TEXT[] NOT NULL DEFAULT '{}',
+  status VARCHAR(20) NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'revoked')),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  last_used_at TIMESTAMPTZ,
+  expires_at TIMESTAMPTZ,
+  revoked_at TIMESTAMPTZ,
+  rotated_from_id UUID REFERENCES developer_api_keys(id) ON DELETE SET NULL
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_developer_api_keys_prefix
+  ON developer_api_keys(key_prefix);
+CREATE INDEX IF NOT EXISTS idx_developer_api_keys_user
+  ON developer_api_keys(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_developer_api_keys_status
+  ON developer_api_keys(user_id, status);
+
+-- Developer projects (Phase 3). A project groups API keys for one application.
+-- Names are unique per developer (case-insensitive) so the auto-created project
+-- from a Phase 2 projectName value behaves as expected.
+CREATE TABLE IF NOT EXISTS developer_projects (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  name VARCHAR(100) NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_developer_projects_user
+  ON developer_projects(user_id, created_at DESC);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_developer_projects_user_name
+  ON developer_projects(user_id, lower(name));
+
+-- Link existing keys to projects without breaking Phase 2 records. The
+-- denormalized project_name is intentionally kept as a compatibility mirror.
+ALTER TABLE developer_api_keys
+  ADD COLUMN IF NOT EXISTS project_id UUID REFERENCES developer_projects(id) ON DELETE RESTRICT;
+
+-- Backfill: one project per distinct (user, project_name) pair, then attach the
+-- existing key rows. Safe to re-run; never deletes or rewrites key credentials.
+INSERT INTO developer_projects (user_id, name)
+SELECT DISTINCT ON (k.user_id, lower(k.project_name)) k.user_id, k.project_name
+FROM developer_api_keys k
+WHERE NOT EXISTS (
+  SELECT 1 FROM developer_projects p
+  WHERE p.user_id = k.user_id AND lower(p.name) = lower(k.project_name)
+)
+ORDER BY k.user_id, lower(k.project_name), k.created_at;
+
+UPDATE developer_api_keys k
+SET project_id = p.id
+FROM developer_projects p
+WHERE k.project_id IS NULL
+  AND p.user_id = k.user_id
+  AND lower(p.name) = lower(k.project_name);
+
+CREATE INDEX IF NOT EXISTS idx_developer_api_keys_project
+  ON developer_api_keys(project_id, created_at DESC);
+
+-- Persistent per-request analytics (Phase 3). No credential material, headers
+-- or bodies are stored: only routing/performance metadata owned by the user.
+CREATE TABLE IF NOT EXISTS developer_api_usage_events (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  api_key_id UUID REFERENCES developer_api_keys(id) ON DELETE SET NULL,
+  project_id UUID REFERENCES developer_projects(id) ON DELETE SET NULL,
+  endpoint VARCHAR(255) NOT NULL,
+  method VARCHAR(10) NOT NULL,
+  environment VARCHAR(10) NOT NULL CHECK (environment IN ('test', 'live')),
+  status_code INTEGER NOT NULL CHECK (status_code BETWEEN 100 AND 599),
+  duration_ms INTEGER NOT NULL CHECK (duration_ms >= 0),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_developer_usage_user_created
+  ON developer_api_usage_events(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_developer_usage_project_created
+  ON developer_api_usage_events(user_id, project_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_developer_usage_endpoint
+  ON developer_api_usage_events(user_id, endpoint, created_at DESC);
 `;
 
 export async function runMigrations(): Promise<{ success: boolean; message: string }> {

@@ -1,0 +1,16 @@
+[LinkFlow Backend] Server listening on 0.0.0.0:3999
+[LinkFlow Backend] Local:  http://localhost:3999
+[LinkFlow Backend] LAN:    http://10.97.135.119:3999
+[LinkFlow Backend] If a physical phone cannot connect, allow this port through the OS firewall (Windows: allow node.exe on Private networks) and keep both devices on the same network.
+[LinkFlow Backend] Hint: the mobile app derives the API host from the Expo dev-server address. If you use `expo start --tunnel`, set EXPO_PUBLIC_API_URL to a publicly reachable URL for this backend.
+[LinkFlow Backend] Connected to PostgreSQL DATABASE_URL. Running migrations...
+[API] GET /api/openapi.json 200 6ms
+[API] GET /api/postman/collection.json 200 1ms
+[API] GET /api/postman/environment.json 200 1ms
+[API] GET /api/v1/links 401 1ms
+[LinkFlow Backend] Migrations: Database schema and migrations applied successfully.
+[LinkFlow Backend] Notification checks scheduled every 15 min.
+[API] GET /api/v1/links 401 1ms
+[API] GET /api/openapi.json 200 0ms
+[API] GET /api/openapi.json 200 1ms
+[API] GET /api/v1/links 401 1ms

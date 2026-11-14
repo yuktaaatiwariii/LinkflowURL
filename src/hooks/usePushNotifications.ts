@@ -9,6 +9,7 @@ import {
   unregisterDeviceToken,
   type NotificationPlatform,
 } from '../services/notifications';
+import { getSessionToken } from '../services/authToken';
 
 /**
  * Push-notification registration for LinkFlow.
@@ -29,6 +30,11 @@ import {
 export type PushPermissionState = 'undetermined' | 'granted' | 'denied';
 
 export const NOTIFICATION_CHANNEL_ID = 'linkflow-alerts';
+
+/** Module-level registration state to deduplicate across hook instances */
+let globalRegistrationPromise: Promise<boolean> | null = null;
+let globalExpoPushToken: string | null = null;
+let globalPermission: PushPermissionState = 'undetermined';
 
 /** Foreground behaviour: show the notification as a banner + in the tray. */
 Notifications.setNotificationHandler({
@@ -60,11 +66,18 @@ function currentPlatform(): NotificationPlatform {
 }
 
 export function usePushNotifications() {
-  const { getToken } = useAuth();
-  const [permission, setPermission] = useState<PushPermissionState>('undetermined');
-  const [expoPushToken, setExpoPushToken] = useState<string | null>(null);
+  const { isLoaded, isSignedIn, userId } = useAuth();
+  const [permission, setPermission] = useState<PushPermissionState>(globalPermission);
+  const [expoPushToken, setExpoPushToken] = useState<string | null>(globalExpoPushToken);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   const registeringRef = useRef(false);
+  const userIdRef = useRef<string | null>(null);
+
+  // Keep refs in sync with global state
+  useEffect(() => {
+    setPermission(globalPermission);
+    setExpoPushToken(globalExpoPushToken);
+  }, []);
 
   /** Creates the Android channel (required for Android 8+ notifications). */
   const ensureChannel = useCallback(async () => {
@@ -74,7 +87,7 @@ export function usePushNotifications() {
         name: 'LinkFlow alerts',
         importance: Notifications.AndroidImportance.DEFAULT,
         vibrationPattern: [0, 250, 250, 250],
-        lightColor: '#792CF0',
+        lightColor: '#FFFFFF',
         sound: 'default',
       });
     } catch (err: any) {
@@ -89,7 +102,9 @@ export function usePushNotifications() {
       const granted =
         current.granted ||
         current.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL;
-      setPermission(granted ? 'granted' : current.canAskAgain === false ? 'denied' : 'undetermined');
+      const newPermission = granted ? 'granted' : current.canAskAgain === false ? 'denied' : 'undetermined';
+      globalPermission = newPermission;
+      setPermission(newPermission);
       return granted;
     } catch {
       return false;
@@ -98,107 +113,123 @@ export function usePushNotifications() {
 
   /** Fetches the Expo push token and stores it on the backend. */
   const syncTokenWithBackend = useCallback(
-    async (token: string) => {
-      const authToken = await getToken();
-      if (!authToken) return false;
-      const res = await registerDeviceToken(
-        authToken,
-        token,
-        currentPlatform(),
-        Device.deviceName || undefined
-      );
-      if (res.error) {
-        setStatusMessage(res.error);
+    async (token: string): Promise<boolean> => {
+      try {
+        const authToken = await getSessionToken({ skipCache: false });
+        if (!authToken) return false;
+        const res = await registerDeviceToken(
+          authToken,
+          token,
+          currentPlatform(),
+          Device.deviceName || undefined
+        );
+        if (res.error) {
+          setStatusMessage(res.error);
+          return false;
+        }
+        setStatusMessage(null);
+        return true;
+      } catch (err: any) {
+        setStatusMessage(err?.message || 'Failed to sync push token');
         return false;
       }
-      setStatusMessage(null);
-      return true;
     },
-    [getToken]
+    []
   );
 
   /**
    * Registers the device token with the backend. Safe to call repeatedly:
    * the backend upserts on the token value, so there are no duplicates.
+   * Deduplicated across all hook instances.
    */
   const registerForPushNotifications = useCallback(async (): Promise<boolean> => {
     if (registeringRef.current) return false;
+    if (globalRegistrationPromise) return globalRegistrationPromise;
+
     registeringRef.current = true;
 
-    try {
-      await ensureChannel();
+    globalRegistrationPromise = (async () => {
+      try {
+        await ensureChannel();
 
-      const projectId = getEasProjectId();
-      if (!projectId) {
+        const projectId = getEasProjectId();
+        if (!projectId) {
+          setStatusMessage(
+            'Push notifications need an EAS project id. Run `eas init` and rebuild the app.'
+          );
+          return false;
+        }
+
+        const existing = await Notifications.getPermissionsAsync();
+        const alreadyGranted =
+          existing.granted ||
+          existing.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL;
+
+        const requested = alreadyGranted
+          ? existing
+          : await Notifications.requestPermissionsAsync({
+              ios: { allowAlert: true, allowBadge: true, allowSound: true },
+            });
+
+        const granted =
+          requested.granted ||
+          requested.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL;
+
+        if (!granted) {
+          const newPermission = requested.canAskAgain === false ? 'denied' : 'undetermined';
+          globalPermission = newPermission;
+          setPermission(newPermission);
+          setStatusMessage(
+            requested.canAskAgain === false
+              ? 'Notifications are blocked for LinkFlow. Enable them in your device settings.'
+              : 'Notification permission was not granted.'
+          );
+          return false;
+        }
+
+        globalPermission = 'granted';
+        setPermission('granted');
+
+        const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId });
+        const token = tokenResponse?.data;
+        if (!token) {
+          setStatusMessage('Could not obtain a push token for this device.');
+          return false;
+        }
+
+        globalExpoPushToken = token;
+        setExpoPushToken(token);
+        const synced = await syncTokenWithBackend(token);
+        if (!synced) {
+          setStatusMessage('Registered the device, but the server could not be reached.');
+        }
+        return synced;
+      } catch (err: any) {
+        const message = err?.message || 'Could not set up notifications.';
+        // Expo Go cannot issue push tokens; development builds are required.
         setStatusMessage(
-          'Push notifications need an EAS project id. Run `eas init` and rebuild the app.'
+          /Expo Go|not available|standalone/i.test(message)
+            ? 'Push notifications require a development build of LinkFlow (not Expo Go).'
+            : message
         );
         return false;
+      } finally {
+        registeringRef.current = false;
+        globalRegistrationPromise = null;
       }
+    })();
 
-      const existing = await Notifications.getPermissionsAsync();
-      const alreadyGranted =
-        existing.granted ||
-        existing.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL;
-
-      const requested = alreadyGranted
-        ? existing
-        : await Notifications.requestPermissionsAsync({
-            ios: { allowAlert: true, allowBadge: true, allowSound: true },
-          });
-
-      const granted =
-        requested.granted ||
-        requested.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL;
-
-      if (!granted) {
-        setPermission(requested.canAskAgain === false ? 'denied' : 'undetermined');
-        setStatusMessage(
-          requested.canAskAgain === false
-            ? 'Notifications are blocked for LinkFlow. Enable them in your device settings.'
-            : 'Notification permission was not granted.'
-        );
-        return false;
-      }
-
-      setPermission('granted');
-
-      const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId });
-      const token = tokenResponse?.data;
-      if (!token) {
-        setStatusMessage('Could not obtain a push token for this device.');
-        return false;
-      }
-
-      setExpoPushToken(token);
-      const synced = await syncTokenWithBackend(token);
-      if (!synced) {
-        setStatusMessage('Registered the device, but the server could not be reached.');
-      }
-      return synced;
-    } catch (err: any) {
-      const message = err?.message || 'Could not set up notifications.';
-      // Expo Go cannot issue push tokens; development builds are required.
-      setStatusMessage(
-        /Expo Go|not available|standalone/i.test(message)
-          ? 'Push notifications require a development build of LinkFlow (not Expo Go).'
-          : message
-      );
-      return false;
-    } finally {
-      registeringRef.current = false;
-    }
+    return globalRegistrationPromise;
   }, [ensureChannel, syncTokenWithBackend]);
 
   /** Removes this device's token from the backend (called on sign-out). */
   const unregisterFromPushNotifications = useCallback(async () => {
     try {
-      const authToken = await getToken();
+      const authToken = await getSessionToken({ skipCache: false });
       if (!authToken) return;
 
-      // The token may not be in this hook instance's state (the profile screen
-      // mounts its own copy), so fall back to asking the OS for it.
-      let token = expoPushToken;
+      // Use global token if available, otherwise fetch from OS
+      let token = globalExpoPushToken;
       if (!token) {
         const projectId = getEasProjectId();
         if (!projectId) return;
@@ -212,18 +243,25 @@ export function usePushNotifications() {
       if (!token) return;
 
       await unregisterDeviceToken(authToken, token);
+      globalExpoPushToken = null;
       setExpoPushToken(null);
     } catch {
       // Signing out must never fail because of the token cleanup.
     }
-  }, [expoPushToken, getToken]);
+  }, []);
 
   // Restore an already-granted registration (no prompt) and keep it fresh.
+  // Runs only when user is signed in, and only once per user.
   useEffect(() => {
     let cancelled = false;
 
     // The web build has no push transport: Expo push tokens are native-only.
     if (Platform.OS === 'web') return;
+    if (!isLoaded || !isSignedIn || !userId) return;
+
+    // Only run when user changes
+    if (userIdRef.current === userId) return;
+    userIdRef.current = userId;
 
     (async () => {
       const granted = await refreshPermission();
@@ -237,6 +275,7 @@ export function usePushNotifications() {
         const tokenResponse = await Notifications.getExpoPushTokenAsync({ projectId });
         const token = tokenResponse?.data;
         if (!token || cancelled) return;
+        globalExpoPushToken = token;
         setExpoPushToken(token);
         await syncTokenWithBackend(token);
       } catch {
@@ -247,7 +286,7 @@ export function usePushNotifications() {
     return () => {
       cancelled = true;
     };
-  }, [refreshPermission, ensureChannel, syncTokenWithBackend]);
+  }, [isLoaded, isSignedIn, userId, refreshPermission, ensureChannel, syncTokenWithBackend]);
 
   // The OS can rotate the push token while the app runs; re-register it.
   useEffect(() => {
@@ -255,6 +294,7 @@ export function usePushNotifications() {
     const subscription = Notifications.addPushTokenListener(async (event: any) => {
       const token = event?.data;
       if (!token) return;
+      globalExpoPushToken = token;
       setExpoPushToken(token);
       await syncTokenWithBackend(token);
     });

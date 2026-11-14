@@ -5,8 +5,8 @@ import {
   ScrollView,
   StatusBar,
   TouchableOpacity,
-  Platform,
   Image,
+  Platform,
   ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -22,11 +22,36 @@ import {
 import { useIsDesktop, useIsMobile } from '../../src/hooks/useBreakpoint';
 import { MobileLanding } from '../../src/components/landing/MobileLanding';
 
+/** Desktop-only FAQ. Answers intentionally limited to shipped functionality. */
+const FAQ_ITEMS = [
+  {
+    question: 'What is LinkFlow?',
+    answer:
+      'LinkFlow is a link management platform that shortens URLs, creates QR codes, and keeps every link organised in one dashboard.',
+  },
+  {
+    question: 'How does URL shortening work?',
+    answer:
+      'Paste a long URL into your dashboard and LinkFlow generates a short link you can copy and share anywhere.',
+  },
+  {
+    question: 'Can I generate and share QR codes?',
+    answer:
+      'Yes. Each link can be turned into a QR code that you can download as an image or share straight from your device.',
+  },
+  {
+    question: 'Can I track link performance?',
+    answer:
+      'Yes. Your dashboard shows total clicks, the number of shortened links, and a last-7-days activity chart.',
+  },
+];
+
 export default function WelcomeScreen() {
   const router = useRouter();
   const isDesktop = useIsDesktop();
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   const scrollToSection = useCallback((sectionId: string) => {
     setMobileMenuOpen(false);
@@ -141,7 +166,7 @@ export default function WelcomeScreen() {
                   style={[styles.mobileMenuItem, styles.mobileMenuItemPrimary]}
                   onPress={() => router.push('/(auth)/sign-up' as any)}
                 >
-                  <Text style={styles.mobileMenuItemText}>Get Started Free</Text>
+                  <Text style={[styles.mobileMenuItemText, styles.mobileMenuItemTextPrimary]}>Get Started Free</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -155,87 +180,88 @@ export default function WelcomeScreen() {
       >
  {/* Hero Section */}
 <View style={styles.heroSection} id="hero">
-  {/* Layer 0: Full-size background image */}
-  <Image
-    source={require('../../assets/img.png')}
-    style={styles.heroBgImage}
-    resizeMode="cover"
-  />
-  {/* Layer 0.5: Subtle dark overlay for readability */}
-  <View style={styles.heroBgOverlay} />
-  <View pointerEvents="none" style={styles.heroBackgroundGlow} />
-  <View pointerEvents="none" style={styles.heroBackgroundGlowSecondary} />
-
   {isDesktop ? (
-    <View style={styles.heroDesktop}>
-      {/* Left Column */}
-      <View style={styles.heroLeft}>
-        <View style={styles.badgePill}>
+    <>
+      {/* Layer 0: full-bleed desktop hero background */}
+      <View pointerEvents="none" style={styles.heroBgWrap}>
+        <Image
+          source={require('../../assets/image.png')}
+          style={styles.heroBgImage}
+          resizeMode="cover"
+        />
+      </View>
+      {/* Layer 1: readability overlay */}
+      <View pointerEvents="none" style={styles.heroBgOverlay} />
+
+      {/* Layer 10: existing hero content, anchored left */}
+      <View style={styles.heroDesktop}>
+        <View style={styles.heroLeft}>
+          <View style={[styles.badgePill, styles.badgePillDesktop]}>
+            <AppIcon name="sparkles" size={14} color={Colors.accent} />
+            <Text style={styles.badgeText}>
+              Next-Gen URL & QR Engine
+            </Text>
+          </View>
+
+          <View style={styles.heroHeadingWrapper}>
+            <Text style={[styles.heroKicker, styles.heroTextDesktop, {
+              fontSize: 52,
+              lineHeight: 60,
+            }]}>
+              Shorten Links.
+            </Text>
+
+            <GradientText style={[styles.heroGradient, styles.heroTextDesktop, {
+              fontSize: 52,
+              lineHeight: 60,
+            }] as any}>
+              Create QR Codes.
+            </GradientText>
+
+            <Text style={[styles.heroKicker, styles.heroTextDesktop, {
+              fontSize: 52,
+              lineHeight: 60,
+            }] as any}>
+              Share Smarter.
+            </Text>
+          </View>
+
+          <Text style={[styles.heroDescription, styles.heroTextDesktop, {
+            fontSize: 18,
+            lineHeight: 30,
+            maxWidth: 540,
+          }]}>
+            Turn long URLs into clean, shareable short links and beautiful QR
+            codes. Manage everything in one place with LinkFlow URL.
+          </Text>
+
+          <View style={[styles.heroActions, styles.heroActionsDesktop]}>
+            <CustomButton
+              title="Get Started Free"
+              size="lg"
+              variant="primary"
+              gradient
+              onPress={() => router.push('/(auth)/sign-up' as any)}
+            />
+
+            <CustomButton
+              title="Learn More"
+              size="lg"
+              variant="outline"
+              onPress={() => scrollToSection('features')}
+            />
+          </View>
+        </View>
+      </View>
+    </>
+  ) : (
+    <View style={styles.heroMobileContent}>
+        <View style={[styles.badgePill, styles.badgePillMobile]}>
           <AppIcon name="sparkles" size={14} color={Colors.accent} />
           <Text style={styles.badgeText}>
             Next-Gen URL & QR Engine
           </Text>
         </View>
-
-        <View style={styles.heroHeadingWrapper}>
-          <Text style={[styles.heroKicker, {
-            fontSize: 68,
-            lineHeight: 76,
-          }]}>
-            Shorten Links.
-          </Text>
-
-          <GradientText style={[styles.heroGradient, {
-            fontSize: 68,
-            lineHeight: 76,
-          }] as any}>
-            Create QR Codes.
-          </GradientText>
-
-          <Text style={[styles.heroKicker, {
-            fontSize: 68,
-            lineHeight: 76,
-          }] as any}>
-            Share Smarter.
-          </Text>
-        </View>
-
-        <Text style={[styles.heroDescription, {
-          fontSize: 19,
-          lineHeight: 31,
-          maxWidth: 540,
-          textAlign: 'left',
-        }]}>
-          Turn long URLs into clean, shareable short links and beautiful QR
-          codes. Manage everything in one place with LinkFlow URL.
-        </Text>
-
-        <View style={styles.heroActions}>
-          <CustomButton
-            title="Get Started Free"
-            size="lg"
-            variant="primary"
-            gradient
-            onPress={() => router.push('/(auth)/sign-up' as any)}
-          />
-
-          <CustomButton
-            title="Learn More"
-            size="lg"
-            variant="outline"
-            onPress={() => scrollToSection('features')}
-          />
-        </View>
-      </View>
-    </View>
-  ) : (
-    <View style={styles.heroMobileContent}>
-      <View style={styles.badgePill}>
-        <AppIcon name="sparkles" size={14} color={Colors.accent} />
-        <Text style={styles.badgeText}>
-          Next-Gen URL & QR Engine
-        </Text>
-      </View>
 
       <View style={styles.heroHeadingWrapper}>
         <Text style={[styles.heroKicker, {
@@ -338,28 +364,51 @@ export default function WelcomeScreen() {
 
         {/* Benefits Section */}
         <View style={styles.benefitsSection} id="benefits">
-          {/* Layer 0: Full-size background image */}
-          <Image
-            source={require('../../assets/left.png')}
-            style={styles.benefitsBgImage}
-            resizeMode="cover"
-          />
-          {/* Layer 0.5: Subtle dark overlay for readability */}
-          <View style={styles.benefitsBgOverlay} />
-
           {isDesktop ? (
             <View style={styles.benefitsDesktop}>
+              {/* Left Column — compact desktop FAQ */}
+              <View style={styles.benefitsFaq}>
+                <Text style={styles.faqHeading}>Frequently Asked Questions</Text>
+
+                <View style={styles.faqList}>
+                  {FAQ_ITEMS.map((item, index) => {
+                    const isOpen = openFaq === index;
+                    return (
+                      <View key={item.question} style={styles.faqItem}>
+                        <TouchableOpacity
+                          style={styles.faqQuestionRow}
+                          activeOpacity={0.75}
+                          accessibilityRole="button"
+                          accessibilityState={{ expanded: isOpen }}
+                          onPress={() => setOpenFaq(isOpen ? null : index)}
+                        >
+                          <Text style={styles.faqQuestion}>{item.question}</Text>
+                          <View style={[styles.faqIcon, isOpen && styles.faqIconOpen]}>
+                            <AppIcon name="plus" size={15} color={Colors.textSecondary} />
+                          </View>
+                        </TouchableOpacity>
+
+                        {isOpen && (
+                          <Text style={styles.faqAnswer}>{item.answer}</Text>
+                        )}
+                      </View>
+                    );
+                  })}
+                </View>
+              </View>
+
+              {/* Right Column — existing content */}
               <View style={styles.benefitsContent}>
-                <Text style={styles.benefitsKicker}>Why Choose LinkFlow?</Text>
-                <Text style={styles.benefitsHeading}>
+                <Text style={[styles.benefitsKicker, styles.benefitsTextDesktop]}>Why Choose LinkFlow?</Text>
+                <Text style={[styles.benefitsHeading, styles.benefitsHeadingDesktop, styles.benefitsTextDesktop]}>
                   More Than Just a URL Shortener
                 </Text>
-                <Text style={styles.benefitsDesc}>
+                <Text style={[styles.benefitsDesc, styles.benefitsTextDesktop]}>
                   A complete link management solution designed for speed,
                   simplicity, and powerful insights.
                 </Text>
 
-                <View style={styles.benefitsList}>
+                <View style={[styles.benefitsList, styles.benefitsListDesktop]}>
                   <TouchableOpacity
                     style={[styles.benefitItem, styles.benefitItemHover]}
                     activeOpacity={0.8}
@@ -577,7 +626,7 @@ const styles: any = {
   navSignInText: {
     fontSize: 14,
     fontWeight: '700',
-    color: Colors.textPrimary,
+    color: Colors.background,
   },
 
   mobileNavBar: {
@@ -601,7 +650,7 @@ const styles: any = {
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(9, 5, 20, 0.95)',
+    backgroundColor: 'rgba(24, 24, 24, 0.98)',
   },
   mobileMenuContent: {
     padding: 32,
@@ -624,11 +673,15 @@ const styles: any = {
   mobileMenuItemPrimary: {
     backgroundColor: Colors.primary,
     borderRadius: 10,
+    paddingHorizontal: 16,
   },
   mobileMenuItemText: {
     fontSize: 16,
     fontWeight: '600',
     color: Colors.textPrimary,
+  },
+  mobileMenuItemTextPrimary: {
+    color: Colors.background,
   },
 
   /* Hero */
@@ -642,41 +695,40 @@ heroSection: {
   paddingBottom: 88,
   alignSelf: 'center',
   justifyContent: 'center',
-  backgroundColor: '#090414',
+  backgroundColor: Colors.background,
   overflow: 'hidden',
 },
 
-heroBackgroundGlow: {
-  position: 'absolute',
-  width: 620,
-  height: 620,
-  borderRadius: 310,
-  right: '8%',
-  top: 10,
-  backgroundColor: '#3B0764',
-  opacity: 0.22,
+heroDesktop: {
+  width: '100%',
+  maxWidth: 1240,
+  minHeight: 520,
+  alignSelf: 'center',
+  justifyContent: 'center',
+  alignItems: 'flex-start',
+  zIndex: 10,
 },
 
-heroBackgroundGlowSecondary: {
+heroLeft: {
+  width: '100%',
+  maxWidth: 620,
+  alignItems: 'flex-start',
+  zIndex: 10,
+},
+
+/* Desktop-only hero background layers */
+heroBgWrap: {
   position: 'absolute',
-  width: 460,
-  height: 460,
-  borderRadius: 230,
+  top: 0,
+  bottom: 0,
   left: '-12%',
-  bottom: -240,
-  backgroundColor: '#581C87',
-  opacity: 0.16,
+  right: 0,
+  zIndex: 0,
 },
 
 heroBgImage: {
-  position: 'absolute',
-  top: 0,
-  left: 0,
-  right: 0,
-  bottom: 0,
   width: '100%',
   height: '100%',
-  zIndex: 0,
 },
 
 heroBgOverlay: {
@@ -685,21 +737,21 @@ heroBgOverlay: {
   left: 0,
   right: 0,
   bottom: 0,
-  backgroundColor: 'rgba(9, 5, 20, 0.35)',
-  zIndex: 5,
+  backgroundColor: 'rgba(0, 0, 0, 0.55)',
+  zIndex: 1,
 },
 
-heroDesktop: {
-  width: '100%',
-  maxWidth: 1360,
-  minHeight: 500,
-  alignSelf: 'center',
+/* Desktop-only hero text alignment */
+badgePillDesktop: {
+  alignSelf: 'flex-start',
 },
 
-heroLeft: {
-  flex: 1.08,
-  maxWidth: 690,
-  zIndex: 10,
+heroTextDesktop: {
+  textAlign: 'left',
+},
+
+heroActionsDesktop: {
+  justifyContent: 'flex-start',
 },
 
 heroMobileContent: {
@@ -710,22 +762,50 @@ heroMobileContent: {
   zIndex: 10,
 },
 
+badgePill: {
+  flexDirection: 'row',
+  alignItems: 'center',
+  gap: 8,
+  alignSelf: 'center',
+  paddingHorizontal: 12,
+  paddingVertical: 6,
+  borderRadius: 8,
+  backgroundColor: Colors.surfaceCard,
+  borderWidth: 1,
+  borderColor: Colors.border,
+  marginBottom: 20,
+},
+
+badgePillMobile: {
+  alignSelf: 'center',
+},
+
+badgeText: {
+  fontSize: 12,
+  fontWeight: '700',
+  letterSpacing: 0.6,
+  color: Colors.textSecondary,
+  textTransform: 'uppercase',
+},
+
 heroKicker: {
   fontWeight: '900',
   color: '#FFFFFF',
   marginBottom: 4,
   letterSpacing: -1.8,
+  textAlign: 'center',
 },
 
 heroGradient: {
   color: Colors.accent,
   fontWeight: '900',
   letterSpacing: -1.8,
+  textAlign: 'center',
 },
 
 heroDescription: {
   fontSize: 19,
-  color: '#D6CBEA',
+  color: Colors.textSecondary,
   lineHeight: 31,
   marginBottom: 34,
   textAlign: 'left',
@@ -734,6 +814,7 @@ heroDescription: {
 heroActions: {
   flexDirection: 'row',
   alignItems: 'center',
+  justifyContent: 'center',
   gap: 18,
   marginBottom: 40,
   marginTop: 2,
@@ -794,7 +875,7 @@ heroActions: {
   shortenBtnText: {
     fontSize: 13,
     fontWeight: '700',
-    color: Colors.textPrimary,
+    color: Colors.background,
   },
   resultCard: {
     backgroundColor: Colors.surface,
@@ -821,32 +902,11 @@ heroActions: {
     alignItems: 'center',
     marginTop: 16,
   },
-  phoneGlow: {
-    position: 'absolute',
-    top: -40,
-    right: -40,
-    width: 160,
-    height: 160,
-    backgroundColor: Colors.primary,
-    borderRadius: 80,
-    opacity: 0.3,
-  },
   qrCodeLarge: {
     position: 'absolute',
     top: 60,
     right: -60,
     alignItems: 'center',
-  },
-   qrCodeGlow: {
-    position: 'absolute',
-    top: -20,
-    left: -20,
-    right: -20,
-    bottom: -20,
-    backgroundColor: Colors.primary,
-    borderRadius: 60,
-    opacity: 0.15,
-    zIndex: -1,
   },
 
   phoneMockupMobile: {
@@ -939,42 +999,87 @@ heroActions: {
     paddingBottom: 90,
     position: 'relative',
     overflow: 'hidden',
-  },
-  benefitsBgImage: {
-    position: 'absolute',
-    top: 0,
-    
-    left: 60,
-    right: 0,
-    bottom: 0,
-    width: '80%',
-    height: '100%',
-    zIndex: 0,
-  },
-  benefitsBgOverlay: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: 'rgba(9, 5, 20, 0.4)',
-    zIndex: 5,
+    backgroundColor: Colors.background,
   },
   benefitsDesktop: {
     position: 'relative',
     zIndex: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'flex-end',
+    justifyContent: 'space-between',
     width: '100%',
-    maxWidth: 1400,
+    maxWidth: 1240,
     alignSelf: 'center',
     minHeight: 450,
+    gap: 64,
+  },
+  /* Desktop-only Why Choose Us FAQ */
+  benefitsFaq: {
+    flex: 1,
+    maxWidth: 560,
+    alignSelf: 'center',
+  },
+  faqHeading: {
+    fontSize: 20,
+    fontWeight: '800',
+    letterSpacing: -0.3,
+    color: Colors.textPrimary,
+    marginBottom: 16,
+  },
+  faqList: {
+    width: '100%',
+  },
+  faqItem: {
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+  },
+  faqQuestionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 16,
+    paddingVertical: 14,
+  },
+  faqQuestion: {
+    flex: 1,
+    fontSize: 14.5,
+    fontWeight: '600',
+    color: Colors.textPrimary,
+  },
+  faqAnswer: {
+    fontSize: 13.5,
+    lineHeight: 21,
+    color: Colors.textSecondary,
+    paddingRight: 30,
+    paddingBottom: 14,
+  },
+  faqIcon: {
+    width: 18,
+    height: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  faqIconOpen: {
+    transform: [{ rotate: '45deg' }],
+  },
+  benefitsHeadingDesktop: {
+    fontSize: 34,
+    lineHeight: 44,
+  },
+  benefitsTextDesktop: {
+    textAlign: 'left',
+    alignSelf: 'stretch',
+  },
+  benefitsListDesktop: {
+    alignSelf: 'flex-start',
+    maxWidth: 460,
   },
   benefitsContent: {
+    flex: 1,
     zIndex: 10,
-    maxWidth: 520,
-    alignSelf: 'flex-end',
+    maxWidth: 560,
+    alignSelf: 'center',
+    alignItems: 'flex-start',
     textAlign: 'left',
   },
   benefitsKicker: {
@@ -982,21 +1087,27 @@ heroActions: {
     fontWeight: '700',
     color: Colors.accent,
     marginBottom: 12,
+    textAlign: 'center',
   },
   benefitsHeading: {
     fontWeight: '800',
     color: Colors.textPrimary,
     marginBottom: 16,
     lineHeight: 32,
+    textAlign: 'center',
   },
   benefitsDesc: {
     fontSize: 15,
     color: Colors.textSecondary,
     lineHeight: 24,
     marginBottom: 32,
+    textAlign: 'center',
   },
   benefitsList: {
     gap: 12,
+    width: '100%',
+    maxWidth: 420,
+    alignSelf: 'center',
   },
   benefitItem: {
     flexDirection: 'row',
@@ -1050,7 +1161,7 @@ heroActions: {
   newLinkBtnText: {
     fontSize: 13,
       fontWeight: '600',
-    color: Colors.textPrimary,
+    color: Colors.background,
   },
   dashboardList: {
     gap: 12,
@@ -1136,8 +1247,10 @@ heroActions: {
     maxWidth: 1280,
     paddingHorizontal: 36,
     paddingVertical: 26,
-    backgroundColor: Colors.primary,
-    borderRadius: 18,
+    backgroundColor: Colors.surfaceCard,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    borderRadius: 14,
       marginBottom: 64,
     alignSelf: 'center',
   },
@@ -1167,7 +1280,7 @@ heroActions: {
   },
   ctaDesc: {
     fontSize: 15,
-    color: Colors.accentLight,
+    color: Colors.textSecondary,
     marginBottom: 0,
   },
 
@@ -1176,7 +1289,7 @@ heroActions: {
     width: '100%',
     paddingHorizontal: 40,
     paddingVertical: 22,
-    backgroundColor: '#080512',
+    backgroundColor: Colors.background,
     borderTopWidth: 1,
     borderTopColor: Colors.border,
   },

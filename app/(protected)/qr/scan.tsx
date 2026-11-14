@@ -248,7 +248,7 @@ export default function QrScannerScreen() {
                   activeOpacity={0.85}
                   accessibilityRole="button"
                 >
-                  <AppIcon name="external" size={18} color="#FFFFFF" />
+                  <AppIcon name="external" size={18} color={Colors.background} />
                   <Text style={styles.primaryButtonText}>Open URL</Text>
                 </TouchableOpacity>
 
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: 'rgba(16, 9, 31, 0.75)',
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     borderWidth: 1,
     borderColor: Colors.border,
     alignItems: 'center',
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-start',
   },
   dim: {
-    backgroundColor: 'rgba(5, 2, 12, 0.72)',
+    backgroundColor: 'rgba(0, 0, 0, 0.72)',
   },
   middleRow: {
     flexDirection: 'row',
@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
   hintText: {
     color: Colors.textSecondary,
     fontSize: 13.5,
-    backgroundColor: 'rgba(16, 9, 31, 0.8)',
+    backgroundColor: 'rgba(0, 0, 0, 0.8)',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 999,
@@ -451,13 +451,13 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   stateButtonText: {
-    color: '#FFFFFF',
+    color: Colors.background,
     fontSize: 15,
     fontWeight: '700',
   },
   resultOverlay: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(5, 2, 12, 0.72)',
+    backgroundColor: 'rgba(0, 0, 0, 0.72)',
     justifyContent: 'flex-end',
   },
   resultSheet: {
@@ -539,7 +539,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: Colors.background,
     fontSize: 15,
     fontWeight: '700',
   },

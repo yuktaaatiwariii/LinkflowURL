@@ -1,4 +1,10 @@
 import { authenticatedFetch } from './api';
+import {
+  NotificationHistoryItem,
+  NotificationPreferences,
+  DEFAULT_PREFERENCES,
+  type NotificationPhase,
+} from '../state/notificationStore';
 
 /**
  * LinkFlow push-notification API client.
@@ -13,82 +19,139 @@ export type NotificationType = 'milestone' | 'performance' | 'expiration' | 'qr_
 
 export type NotificationPlatform = 'android' | 'ios' | 'web';
 
-export interface NotificationPreferences {
-  master_enabled: boolean;
-  milestones: boolean;
-  performance: boolean;
-  expiration: boolean;
-  qr_activity: boolean;
-  updated_at?: string;
-}
-
-export interface NotificationHistoryItem {
-  id: string;
-  type: NotificationType;
-  title: string;
-  body: string;
-  data: Record<string, unknown> | null;
-  created_at: string;
-}
-
-export const DEFAULT_PREFERENCES: NotificationPreferences = {
-  master_enabled: true,
-  milestones: true,
-  performance: true,
-  expiration: true,
-  qr_activity: true,
+// Re-export types from centralized store
+export type {
+  NotificationHistoryItem,
+  NotificationPreferences,
+  NotificationPhase,
 };
+export { DEFAULT_PREFERENCES };
 
-/** Registers (or refreshes) this device's Expo push token for the user. */
+/** Error thrown when a notification request fails with a non-401 status */
+export class NotificationRequestError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number,
+    public readonly endpoint: string
+  ) {
+    super(message);
+    this.name = 'NotificationRequestError';
+  }
+}
+
+/**
+ * Gateway functions for the notification store to call.
+ * These wrap the authenticatedFetch calls with proper error handling.
+ */
+export async function fetchNotificationHistoryGateway(
+  token: string,
+  limit: number
+): Promise<{ data: { notifications: NotificationHistoryItem[]; total: number } | null; status: number; error: string | null }> {
+  const res = await authenticatedFetch<{ notifications: NotificationHistoryItem[]; total: number }>(
+    `/api/notifications/history?limit=${limit}`,
+    token
+  );
+  return {
+    data: res.data ? { notifications: res.data.notifications, total: res.data.total } : null,
+    status: res.status,
+    error: res.error ?? null,
+  };
+}
+
+export async function fetchNotificationPreferencesGateway(
+  token: string
+): Promise<{ data: { preferences: NotificationPreferences } | null; status: number; error: string | null }> {
+  const res = await authenticatedFetch<{ preferences: NotificationPreferences }>(
+    '/api/notifications/preferences',
+    token
+  );
+  return {
+    data: res.data ? { preferences: res.data.preferences } : null,
+    status: res.status,
+    error: res.error ?? null,
+  };
+}
+
+export async function updateNotificationPreferencesGateway(
+  token: string,
+  prefs: Partial<NotificationPreferences>
+): Promise<{ data: { preferences: NotificationPreferences } | null; status: number; error: string | null }> {
+  const res = await authenticatedFetch<{ preferences: NotificationPreferences }>(
+    '/api/notifications/preferences',
+    token,
+    {
+      method: 'PUT',
+      body: JSON.stringify(prefs),
+    }
+  );
+  return {
+    data: res.data ? { preferences: res.data.preferences } : null,
+    status: res.status,
+    error: res.error ?? null,
+  };
+}
+
+/**
+ * Legacy API functions (kept for backward compatibility during migration).
+ * These will be phased out in favor of the centralized store.
+ */
+
+export async function fetchNotificationHistory(
+  token: string,
+  limit = 50
+): Promise<{ data: { notifications: NotificationHistoryItem[]; total: number } | null; status: number; error: string | null }> {
+  return fetchNotificationHistoryGateway(token, limit);
+}
+
+export async function fetchNotificationPreferences(
+  token: string
+): Promise<{ data: { preferences: NotificationPreferences } | null; status: number; error: string | null }> {
+  return fetchNotificationPreferencesGateway(token);
+}
+
+export async function updateNotificationPreferences(
+  token: string,
+  prefs: Partial<NotificationPreferences>
+): Promise<{ data: { preferences: NotificationPreferences } | null; status: number; error: string | null }> {
+  return updateNotificationPreferencesGateway(token, prefs);
+}
+
 export async function registerDeviceToken(
-  authToken: string,
+  token: string,
   expoPushToken: string,
   platform: NotificationPlatform,
   deviceName?: string
-) {
-  return authenticatedFetch('/api/notifications/register', authToken, {
-    method: 'POST',
-    body: JSON.stringify({ expoPushToken, platform, deviceName }),
-  });
-}
-
-/** Removes this device's push token (used on sign-out). */
-export async function unregisterDeviceToken(authToken: string, expoPushToken: string) {
-  return authenticatedFetch('/api/notifications/unregister', authToken, {
-    method: 'POST',
-    body: JSON.stringify({ expoPushToken }),
-  });
-}
-
-/** Loads the user's stored notification preferences. */
-export async function fetchNotificationPreferences(authToken: string) {
-  return authenticatedFetch<{ preferences: NotificationPreferences }>(
-    '/api/notifications/preferences',
-    authToken,
-    { method: 'GET' }
-  );
-}
-
-/** Persists the user's notification preferences. */
-export async function updateNotificationPreferences(
-  authToken: string,
-  preferences: Partial<NotificationPreferences>
-) {
-  return authenticatedFetch<{ preferences: NotificationPreferences }>(
-    '/api/notifications/preferences',
-    authToken,
+): Promise<{ data: { success: boolean; message?: string } | null; status: number; error: string | null }> {
+  const res = await authenticatedFetch<{ success: boolean; message?: string }>(
+    '/api/notifications/register',
+    token,
     {
-      method: 'PUT',
-      body: JSON.stringify(preferences),
+      method: 'POST',
+      body: JSON.stringify({ expoPushToken, platform, deviceName }),
     }
   );
+  return {
+    data: res.data ? { success: res.data.success, message: res.data.message } : null,
+    status: res.status,
+    error: res.error ?? null,
+  };
 }
 
-/** Loads the user's notification history (most recent first). */
-export async function fetchNotificationHistory(authToken: string, limit = 50) {
-  return authenticatedFetch<{ notifications: NotificationHistoryItem[]; total: number }>(
-    `/api/notifications/history?limit=${limit}`,
-    authToken,
-    { method: 'GET' }
+export async function unregisterDeviceToken(
+  token: string,
+  expoPushToken: string
+): Promise<{ data: { success: boolean; message?: string } | null; status: number; error: string | null }> {
+  const res = await authenticatedFetch<{ success: boolean; message?: string }>(
+    '/api/notifications/register',
+    token,
+    {
+      method: 'DELETE',
+      body: JSON.stringify({ expoPushToken }),
+    }
   );
+  return {
+    data: res.data ? { success: res.data.success, message: res.data.message } : null,
+    status: res.status,
+    error: res.error ?? null,
+  };
 }

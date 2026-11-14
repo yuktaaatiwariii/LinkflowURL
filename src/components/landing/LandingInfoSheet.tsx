@@ -8,9 +8,8 @@ import {
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { AppIcon } from '../AppIcon';
-import { G, L, glow } from './landingTheme';
+import { L, glow } from './landingTheme';
 
 export type InfoKind = 'about' | 'privacy' | 'terms' | 'contact';
 
@@ -145,7 +144,7 @@ export function LandingInfoSheet({
         <Pressable
           style={[
             styles.sheet,
-            glow('#792CF0', 0.35, 22, -6),
+            glow('#000000', 0.4, 18, -4),
             { paddingBottom: 18 + insets.bottom },
           ]}
           onPress={(event) => event.stopPropagation()}
@@ -176,7 +175,7 @@ export function LandingInfoSheet({
               block.type === 'li' ? (
                 <View key={index} style={styles.bulletRow}>
                   <View style={styles.bullet}>
-                    <AppIcon name="check" size={10} color={L.lavender} />
+                    <AppIcon name="check" size={10} color={L.textSecondary} />
                   </View>
                   <Text style={styles.bulletText}>{block.text}</Text>
                 </View>
@@ -197,14 +196,9 @@ export function LandingInfoSheet({
                   onSignUp();
                 }}
               >
-                <LinearGradient
-                  colors={G.brand}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.primaryFill}
-                >
+                <View style={styles.primaryFill}>
                   <Text style={styles.primaryText}>Create Free Account</Text>
-                </LinearGradient>
+                </View>
               </Pressable>
               <Pressable
                 style={styles.secondaryBtn}
@@ -226,15 +220,15 @@ export function LandingInfoSheet({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(4, 2, 8, 0.72)',
+    backgroundColor: 'rgba(0, 0, 0, 0.72)',
     justifyContent: 'flex-end',
   },
   sheet: {
     width: '100%',
     maxHeight: '84%',
     backgroundColor: L.bgAlt,
-    borderTopLeftRadius: 26,
-    borderTopRightRadius: 26,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
     borderWidth: 1,
     borderColor: L.border,
     paddingHorizontal: 20,
@@ -245,7 +239,7 @@ const styles = StyleSheet.create({
     width: 38,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(196, 168, 255, 0.28)',
+    backgroundColor: L.borderLight,
     marginBottom: 12,
   },
   header: {
@@ -258,16 +252,16 @@ const styles = StyleSheet.create({
   closeBtn: {
     width: 32,
     height: 32,
-    borderRadius: 10,
-    backgroundColor: 'rgba(196, 168, 255, 0.08)',
+    borderRadius: 8,
+    backgroundColor: L.card,
     borderWidth: 1,
-    borderColor: L.borderSoft,
+    borderColor: L.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   intro: {
     fontSize: 13,
-    color: L.lavender,
+    color: L.textSecondary,
     marginTop: 6,
     marginBottom: 14,
   },
@@ -288,8 +282,8 @@ const styles = StyleSheet.create({
   bullet: {
     width: 20,
     height: 20,
-    borderRadius: 7,
-    backgroundColor: 'rgba(155, 77, 255, 0.18)',
+    borderRadius: 6,
+    backgroundColor: L.card,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 1,
@@ -301,16 +295,21 @@ const styles = StyleSheet.create({
     color: L.textSecondary,
   },
   actions: { gap: 10, paddingTop: 6 },
-  primaryBtn: { borderRadius: 14, overflow: 'hidden' },
-  primaryFill: { paddingVertical: 14, alignItems: 'center', borderRadius: 14 },
-  primaryText: { fontSize: 15, fontWeight: '800', color: '#FFFFFF' },
+  primaryBtn: { borderRadius: 10, overflow: 'hidden' },
+  primaryFill: {
+    paddingVertical: 14,
+    alignItems: 'center',
+    borderRadius: 10,
+    backgroundColor: L.primary,
+  },
+  primaryText: { fontSize: 15, fontWeight: '800', color: L.bg },
   secondaryBtn: {
     paddingVertical: 13,
     alignItems: 'center',
-    borderRadius: 14,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: L.borderStrong,
-    backgroundColor: 'rgba(155, 77, 255, 0.08)',
+    backgroundColor: L.card,
   },
-  secondaryText: { fontSize: 15, fontWeight: '700', color: L.lavender },
+  secondaryText: { fontSize: 15, fontWeight: '700', color: L.text },
 });

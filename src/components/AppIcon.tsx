@@ -352,7 +352,7 @@ export const AppIcon: React.FC<IconProps> = ({
                 height: stroke,
                 backgroundColor: color,
                 borderRadius: stroke / 2,
-                transform: [{ rotate: '-40deg' }, { translateY: -s * 0.1 }],
+                transform: [{ rotate: '40deg' }, { translateY: -s * 0.1 }],
               }}
             />
             <View
@@ -363,7 +363,7 @@ export const AppIcon: React.FC<IconProps> = ({
                 height: stroke,
                 backgroundColor: color,
                 borderRadius: stroke / 2,
-                transform: [{ rotate: '40deg' }, { translateY: s * 0.1 }],
+                transform: [{ rotate: '-40deg' }, { translateY: s * 0.1 }],
               }}
             />
           </View>

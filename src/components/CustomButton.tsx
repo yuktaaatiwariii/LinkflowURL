@@ -35,7 +35,6 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
   style,
   textStyle,
   fullWidth = false,
-  gradient = false,
 }) => {
   const getContainerStyle = (): ViewStyle => {
     const base: ViewStyle = {
@@ -89,7 +88,8 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
         break;
       case 'primary':
       default:
-        base.backgroundColor = gradient ? Colors.primaryDeep : Colors.primary;
+        // Monochrome theme: the primary action is a solid white surface.
+        base.backgroundColor = Colors.primary;
         break;
     }
 
@@ -134,7 +134,8 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
         break;
       case 'primary':
       default:
-        base.color = Colors.textPrimary;
+        // White surface → inverse (dark) label for AA contrast.
+        base.color = Colors.background;
         break;
     }
 
@@ -154,7 +155,9 @@ export const CustomButton: React.FC<CustomButtonProps> = ({
         <ActivityIndicator
           size="small"
           color={
-            variant === 'outline' ? Colors.primary : Colors.textPrimary
+            variant === 'outline' || variant === 'secondary' || variant === 'ghost'
+              ? Colors.primary
+              : Colors.background
           }
         />
       ) : (

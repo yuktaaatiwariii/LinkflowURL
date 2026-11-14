@@ -1,0 +1,18 @@
+{
+  "name": "LinkFlow API",
+  "values": [
+    {
+      "key": "baseUrl",
+      "value": "https://api.linkflowurl.com",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "apiKey",
+      "value": "YOUR_API_KEY",
+      "type": "secret",
+      "enabled": true
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

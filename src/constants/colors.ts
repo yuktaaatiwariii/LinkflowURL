@@ -1,25 +1,25 @@
 export const Colors = {
   // Backgrounds
-  background: '#090514',
-  surface: '#10091F',
-  surfaceCard: '#180F2B',
-  surfaceSecondary: '#211437',
+  background: '#181818',
+  surface: '#202020',
+  surfaceCard: '#262626',
+  surfaceSecondary: '#303030',
 
-  // Primary purples
-  primary: '#7C22EA',
-  primaryDeep: '#5713B5',
-  primaryDark: '#3A0CA3',
-  accent: '#A855F7',
-  accentLight: '#C8A5FF',
+  // Primary monochrome
+  primary: '#FFFFFF',
+  primaryDeep: '#E5E5E5',
+  primaryDark: '#CCCCCC',
+  accent: '#F5F5F5',
+  accentLight: '#FFFFFF',
 
   // Text
   textPrimary: '#FFFFFF',
-  textSecondary: '#C5B6DC',
-  textMuted: '#8A7CA8',
+  textSecondary: '#C4C4C4',
+  textMuted: '#999999',
 
   // Borders
-  border: '#33204E',
-  borderLight: '#4C386E',
+  border: '#3A3A3A',
+  borderLight: '#505050',
 
   // Status
   success: '#22C55E',
@@ -28,3 +28,9 @@ export const Colors = {
   errorBg: '#450a0a',
   warning: '#F59E0B',
 };
+
+/**
+ * Text/icon colour for content placed on a white (primary) surface.
+ * The palette is monochrome, so inverse content must use the page background.
+ */
+export const OnPrimary = Colors.background;

@@ -6,20 +6,20 @@ interface GradientTextProps {
   children: React.ReactNode;
   style?: TextStyle;
   containerStyle?: ViewStyle;
+  /** Kept for API compatibility; the monochrome theme renders solid text. */
   gradientColors?: string[];
 }
 
-export function GradientText({
-  children,
-  style,
-  containerStyle,
-  gradientColors = [Colors.primary, Colors.accent],
-}: GradientTextProps) {
-  // On Web, we can use a linear gradient background with -webkit-background-clip
-  // On mobile, we render the first part with primary color as accent
+/**
+ * Highlighted headline text.
+ *
+ * The previous multi-stop gradient is intentionally gone: the design system is
+ * monochrome, so emphasis comes from weight and colour contrast instead.
+ */
+export function GradientText({ children, style, containerStyle }: GradientTextProps) {
   return (
     <View style={[styles.container, containerStyle]}>
-      <Text style={[styles.text, style, { color: gradientColors[1] }]}>
+      <Text style={[styles.text, style, { color: Colors.textPrimary }]}>
         {children}
       </Text>
     </View>

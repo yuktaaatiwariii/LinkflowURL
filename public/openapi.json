@@ -1,0 +1,3197 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "LinkFlow API (vv1)",
+    "version": "1.0.0",
+    "description": "Create and manage short links and QR codes, and read the click analytics LinkFlow already records.",
+    "license": {
+      "name": "Proprietary"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://api.linkflowurl.com",
+      "description": "Production API"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Links",
+      "description": "Create, list, retrieve and delete short links."
+    },
+    {
+      "name": "QR codes",
+      "description": "Generate QR images and manage QR metadata."
+    },
+    {
+      "name": "Analytics",
+      "description": "Click analytics actually recorded by LinkFlow. QR scans are not tracked."
+    }
+  ],
+  "paths": {
+    "/api/v1/links": {
+      "get": {
+        "operationId": "listLinks",
+        "summary": "List the short links owned by the API key.",
+        "description": "Returns the authenticated developer's short links, newest first. Pagination is offset-based. The total field is the full number of links owned by the developer, not just the current page.",
+        "tags": [
+          "Links"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-required-scope": "links:read",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum number of links to return.",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "Number of links to skip before returning results.",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 100000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of links.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "links",
+                        "total",
+                        "limit",
+                        "offset"
+                      ],
+                      "properties": {
+                        "links": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/Link"
+                          }
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "offset": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "Links retrieved successfully",
+                  "data": {
+                    "links": [
+                      {
+                        "id": "0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21",
+                        "originalUrl": "https://example.com/launch",
+                        "shortUrl": "https://linkflowurl.com/launch",
+                        "shortCode": "launch",
+                        "customAlias": "launch",
+                        "title": "Launch page",
+                        "isActive": true,
+                        "expiresAt": null,
+                        "clicks": 42,
+                        "createdAt": "2026-11-01T09:12:45.000Z",
+                        "updatedAt": "2026-11-01T09:12:45.000Z"
+                      }
+                    ],
+                    "total": 42,
+                    "limit": 10,
+                    "offset": 0
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "VALIDATION_ERROR": {
+                    "value": {
+                      "success": false,
+                      "message": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+                      "error": {
+                        "code": "VALIDATION_ERROR"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, revoked or expired API key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "MISSING_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "An API key is required in the X-API-Key header.",
+                      "error": {
+                        "code": "MISSING_API_KEY"
+                      }
+                    }
+                  },
+                  "INVALID_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "Invalid API credentials.",
+                      "error": {
+                        "code": "INVALID_API_KEY"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key lacks the required scope, or the account no longer exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "This API key lacks the required scope: links:read.",
+                  "error": {
+                    "code": "INSUFFICIENT_SCOPE"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "The path exists but the method is not supported.",
+            "headers": {
+              "Allow": {
+                "description": "Supported methods for this path.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Method not allowed for this endpoint.",
+                  "error": {
+                    "code": "METHOD_NOT_ALLOWED"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "An unexpected error occurred.",
+                  "error": {
+                    "code": "INTERNAL_ERROR"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createLink",
+        "summary": "Create a short link owned by the API key.",
+        "description": "Creates a short link. Ownership is always taken from the API key; any userId or user_id in the body is ignored. If customAlias is omitted, LinkFlow generates a short code.",
+        "tags": [
+          "Links"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-required-scope": "links:write",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "originalUrl"
+                ],
+                "properties": {
+                  "originalUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "maxLength": 2048,
+                    "description": "Absolute http or https destination URL."
+                  },
+                  "title": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "description": "Optional human-readable label. Blank strings are treated as omitted."
+                  },
+                  "customAlias": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "pattern": "^[A-Za-z0-9]+$",
+                    "description": "Optional Base62 short code. Must be globally unique and contain only A-Z, a-z and 0-9."
+                  }
+                }
+              },
+              "example": {
+                "originalUrl": "https://example.com/launch",
+                "title": "Launch page",
+                "customAlias": "launch"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "The created link.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Link"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "Short link created successfully",
+                  "data": {
+                    "id": "0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21",
+                    "originalUrl": "https://example.com/launch",
+                    "shortUrl": "https://linkflowurl.com/launch",
+                    "shortCode": "launch",
+                    "customAlias": "launch",
+                    "title": "Launch page",
+                    "isActive": true,
+                    "expiresAt": null,
+                    "clicks": 0,
+                    "createdAt": "2026-11-01T09:12:45.000Z",
+                    "updatedAt": "2026-11-01T09:12:45.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Varies by field, for example: originalUrl must be a valid http or https URL. Request body must be valid JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "VALIDATION_ERROR": {
+                    "value": {
+                      "success": false,
+                      "message": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+                      "error": {
+                        "code": "VALIDATION_ERROR"
+                      }
+                    }
+                  },
+                  "INVALID_JSON": {
+                    "value": {
+                      "success": false,
+                      "message": "Request body must be valid JSON.",
+                      "error": {
+                        "code": "INVALID_JSON"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, revoked or expired API key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "MISSING_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "An API key is required in the X-API-Key header.",
+                      "error": {
+                        "code": "MISSING_API_KEY"
+                      }
+                    }
+                  },
+                  "INVALID_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "Invalid API credentials.",
+                      "error": {
+                        "code": "INVALID_API_KEY"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key lacks the required scope, or the account no longer exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "This API key lacks the required scope: links:write.",
+                  "error": {
+                    "code": "INSUFFICIENT_SCOPE"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "The path exists but the method is not supported.",
+            "headers": {
+              "Allow": {
+                "description": "Supported methods for this path.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Method not allowed for this endpoint.",
+                  "error": {
+                    "code": "METHOD_NOT_ALLOWED"
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "That customAlias is already in use.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "ALIAS_TAKEN": {
+                    "value": {
+                      "success": false,
+                      "message": "That customAlias is already in use.",
+                      "error": {
+                        "code": "ALIAS_TAKEN"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body must not exceed 65536 bytes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "PAYLOAD_TOO_LARGE": {
+                    "value": {
+                      "success": false,
+                      "message": "Request body must not exceed 65536 bytes.",
+                      "error": {
+                        "code": "PAYLOAD_TOO_LARGE"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "An unexpected error occurred.",
+                  "error": {
+                    "code": "INTERNAL_ERROR"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/links/:id": {
+      "get": {
+        "operationId": "getLink",
+        "summary": "Retrieve one short link by id.",
+        "description": "Returns one link owned by the authenticated developer. Another developer's link is reported as 404, never 403.",
+        "tags": [
+          "Links"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-required-scope": "links:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Link id returned by the create or list endpoint.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The requested link.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "$ref": "#/components/schemas/Link"
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "Link retrieved successfully",
+                  "data": {
+                    "id": "0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21",
+                    "originalUrl": "https://example.com/launch",
+                    "shortUrl": "https://linkflowurl.com/launch",
+                    "shortCode": "launch",
+                    "customAlias": "launch",
+                    "title": "Launch page",
+                    "isActive": true,
+                    "expiresAt": null,
+                    "clicks": 42,
+                    "createdAt": "2026-11-01T09:12:45.000Z",
+                    "updatedAt": "2026-11-01T09:12:45.000Z"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "VALIDATION_ERROR": {
+                    "value": {
+                      "success": false,
+                      "message": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+                      "error": {
+                        "code": "VALIDATION_ERROR"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, revoked or expired API key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "MISSING_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "An API key is required in the X-API-Key header.",
+                      "error": {
+                        "code": "MISSING_API_KEY"
+                      }
+                    }
+                  },
+                  "INVALID_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "Invalid API credentials.",
+                      "error": {
+                        "code": "INVALID_API_KEY"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key lacks the required scope, or the account no longer exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "This API key lacks the required scope: links:read.",
+                  "error": {
+                    "code": "INSUFFICIENT_SCOPE"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Link not found. (resource-specific)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "NOT_FOUND": {
+                    "value": {
+                      "success": false,
+                      "message": "Link not found. (resource-specific)",
+                      "error": {
+                        "code": "NOT_FOUND"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "The path exists but the method is not supported.",
+            "headers": {
+              "Allow": {
+                "description": "Supported methods for this path.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Method not allowed for this endpoint.",
+                  "error": {
+                    "code": "METHOD_NOT_ALLOWED"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "An unexpected error occurred.",
+                  "error": {
+                    "code": "INTERNAL_ERROR"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteLink",
+        "summary": "Delete one short link by id.",
+        "description": "Permanently deletes a link owned by the authenticated developer. The response contains only the deleted id.",
+        "tags": [
+          "Links"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-required-scope": "links:delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Link id to delete.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The id of the deleted link.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "id"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "Link deleted successfully",
+                  "data": {
+                    "id": "0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "VALIDATION_ERROR": {
+                    "value": {
+                      "success": false,
+                      "message": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+                      "error": {
+                        "code": "VALIDATION_ERROR"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, revoked or expired API key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "MISSING_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "An API key is required in the X-API-Key header.",
+                      "error": {
+                        "code": "MISSING_API_KEY"
+                      }
+                    }
+                  },
+                  "INVALID_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "Invalid API credentials.",
+                      "error": {
+                        "code": "INVALID_API_KEY"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key lacks the required scope, or the account no longer exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "This API key lacks the required scope: links:delete.",
+                  "error": {
+                    "code": "INSUFFICIENT_SCOPE"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Link not found. (resource-specific)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "NOT_FOUND": {
+                    "value": {
+                      "success": false,
+                      "message": "Link not found. (resource-specific)",
+                      "error": {
+                        "code": "NOT_FOUND"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "The path exists but the method is not supported.",
+            "headers": {
+              "Allow": {
+                "description": "Supported methods for this path.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Method not allowed for this endpoint.",
+                  "error": {
+                    "code": "METHOD_NOT_ALLOWED"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "An unexpected error occurred.",
+                  "error": {
+                    "code": "INTERNAL_ERROR"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/links/:id/analytics": {
+      "get": {
+        "operationId": "linkAnalytics",
+        "summary": "Read the click series for one short link.",
+        "description": "Returns the link, its all-time click count and a zero-filled daily click series for the requested window. totalClicks is the link's lifetime count; daily covers only the requested number of days.",
+        "tags": [
+          "Analytics"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-required-scope": "analytics:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "Link id.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "description": "Number of days in the daily series, ending today.",
+            "schema": {
+              "type": "integer",
+              "default": 7,
+              "minimum": 1,
+              "maximum": 90
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Link metadata plus a daily click series.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "link",
+                        "totalClicks",
+                        "range",
+                        "daily"
+                      ],
+                      "properties": {
+                        "link": {
+                          "$ref": "#/components/schemas/Link"
+                        },
+                        "totalClicks": {
+                          "type": "integer",
+                          "minimum": 0
+                        },
+                        "range": {
+                          "$ref": "#/components/schemas/DateRange"
+                        },
+                        "daily": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/DailyClickPoint"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "Link analytics retrieved successfully",
+                  "data": {
+                    "link": {
+                      "id": "0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21",
+                      "originalUrl": "https://example.com/launch",
+                      "shortUrl": "https://linkflowurl.com/launch",
+                      "shortCode": "launch",
+                      "customAlias": "launch",
+                      "title": "Launch page",
+                      "isActive": true,
+                      "expiresAt": null,
+                      "clicks": 42,
+                      "createdAt": "2026-11-01T09:12:45.000Z",
+                      "updatedAt": "2026-11-01T09:12:45.000Z"
+                    },
+                    "totalClicks": 42,
+                    "range": {
+                      "days": 7,
+                      "since": "2026-11-08",
+                      "until": "2026-11-14"
+                    },
+                    "daily": [
+                      {
+                        "date": "2026-11-08",
+                        "clicks": 3
+                      },
+                      {
+                        "date": "2026-11-09",
+                        "clicks": 0
+                      },
+                      {
+                        "date": "2026-11-10",
+                        "clicks": 9
+                      },
+                      {
+                        "date": "2026-11-11",
+                        "clicks": 4
+                      },
+                      {
+                        "date": "2026-11-12",
+                        "clicks": 12
+                      },
+                      {
+                        "date": "2026-11-13",
+                        "clicks": 7
+                      },
+                      {
+                        "date": "2026-11-14",
+                        "clicks": 7
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "VALIDATION_ERROR": {
+                    "value": {
+                      "success": false,
+                      "message": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+                      "error": {
+                        "code": "VALIDATION_ERROR"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, revoked or expired API key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "MISSING_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "An API key is required in the X-API-Key header.",
+                      "error": {
+                        "code": "MISSING_API_KEY"
+                      }
+                    }
+                  },
+                  "INVALID_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "Invalid API credentials.",
+                      "error": {
+                        "code": "INVALID_API_KEY"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key lacks the required scope, or the account no longer exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "This API key lacks the required scope: analytics:read.",
+                  "error": {
+                    "code": "INSUFFICIENT_SCOPE"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Link not found. (resource-specific)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "NOT_FOUND": {
+                    "value": {
+                      "success": false,
+                      "message": "Link not found. (resource-specific)",
+                      "error": {
+                        "code": "NOT_FOUND"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "The path exists but the method is not supported.",
+            "headers": {
+              "Allow": {
+                "description": "Supported methods for this path.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Method not allowed for this endpoint.",
+                  "error": {
+                    "code": "METHOD_NOT_ALLOWED"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "An unexpected error occurred.",
+                  "error": {
+                    "code": "INTERNAL_ERROR"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/qr": {
+      "get": {
+        "operationId": "listQr",
+        "summary": "List the QR codes owned by the API key.",
+        "description": "Returns QR metadata, newest first, with the same offset pagination as links. Image data is not included in list responses.",
+        "tags": [
+          "QR codes"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-required-scope": "qr:read",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "description": "Maximum number of QR codes to return.",
+            "schema": {
+              "type": "integer",
+              "default": 20,
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "description": "Number of QR codes to skip.",
+            "schema": {
+              "type": "integer",
+              "default": 0,
+              "minimum": 0,
+              "maximum": 100000
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "A page of QR metadata.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "qrs",
+                        "total",
+                        "limit",
+                        "offset"
+                      ],
+                      "properties": {
+                        "qrs": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/QrCode"
+                          }
+                        },
+                        "total": {
+                          "type": "integer"
+                        },
+                        "limit": {
+                          "type": "integer"
+                        },
+                        "offset": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "QR codes retrieved successfully",
+                  "data": {
+                    "qrs": [
+                      {
+                        "id": "7f4d2b1c-9e8a-4b3c-8d2e-5a6b7c8d9e0f",
+                        "title": "Launch QR",
+                        "targetUrl": "https://linkflowurl.com/launch",
+                        "linkId": "0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21",
+                        "createdAt": "2026-11-02T10:00:00.000Z",
+                        "updatedAt": "2026-11-02T10:00:00.000Z"
+                      }
+                    ],
+                    "total": 1,
+                    "limit": 10,
+                    "offset": 0
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "VALIDATION_ERROR": {
+                    "value": {
+                      "success": false,
+                      "message": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+                      "error": {
+                        "code": "VALIDATION_ERROR"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, revoked or expired API key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "MISSING_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "An API key is required in the X-API-Key header.",
+                      "error": {
+                        "code": "MISSING_API_KEY"
+                      }
+                    }
+                  },
+                  "INVALID_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "Invalid API credentials.",
+                      "error": {
+                        "code": "INVALID_API_KEY"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key lacks the required scope, or the account no longer exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "This API key lacks the required scope: qr:read.",
+                  "error": {
+                    "code": "INSUFFICIENT_SCOPE"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "The path exists but the method is not supported.",
+            "headers": {
+              "Allow": {
+                "description": "Supported methods for this path.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Method not allowed for this endpoint.",
+                  "error": {
+                    "code": "METHOD_NOT_ALLOWED"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "An unexpected error occurred.",
+                  "error": {
+                    "code": "INTERNAL_ERROR"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createQr",
+        "summary": "Generate a QR code image for a URL or an owned short link.",
+        "description": "Creates QR metadata and returns a PNG data URI. Provide targetUrl, or provide linkId to encode that short link's public URL. If both are supplied, targetUrl wins.",
+        "tags": [
+          "QR codes"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-required-scope": "qr:write",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "anyOf": [
+                  {
+                    "required": [
+                      "targetUrl"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "linkId"
+                    ]
+                  }
+                ],
+                "properties": {
+                  "targetUrl": {
+                    "type": "string",
+                    "format": "uri",
+                    "maxLength": 2048,
+                    "description": "Absolute http or https URL to encode."
+                  },
+                  "linkId": {
+                    "type": "string",
+                    "description": "An owned link id. Its public short URL is encoded when targetUrl is omitted."
+                  },
+                  "title": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "description": "Optional label. Defaults to \"QR Code\" when stored."
+                  },
+                  "image": {
+                    "type": "object",
+                    "properties": {
+                      "size": {
+                        "type": "integer",
+                        "minimum": 128,
+                        "maximum": 1024,
+                        "default": 512,
+                        "description": "PNG width in pixels."
+                      },
+                      "margin": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 16,
+                        "default": 2,
+                        "description": "Quiet-zone margin."
+                      },
+                      "errorCorrectionLevel": {
+                        "type": "string",
+                        "enum": [
+                          "L",
+                          "M",
+                          "Q",
+                          "H"
+                        ],
+                        "default": "M",
+                        "description": "QR error correction level."
+                      },
+                      "dark": {
+                        "type": "string",
+                        "pattern": "^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$",
+                        "default": "#000000",
+                        "description": "Foreground hex colour."
+                      },
+                      "light": {
+                        "type": "string",
+                        "pattern": "^#(?:[0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$",
+                        "default": "#FFFFFF",
+                        "description": "Background hex colour."
+                      }
+                    }
+                  }
+                }
+              },
+              "example": {
+                "linkId": "0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21",
+                "title": "Launch QR",
+                "image": {
+                  "size": 512,
+                  "margin": 2,
+                  "errorCorrectionLevel": "M",
+                  "dark": "#000000",
+                  "light": "#FFFFFF"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "QR metadata plus a rendered PNG data URI.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "qr",
+                        "image"
+                      ],
+                      "properties": {
+                        "qr": {
+                          "$ref": "#/components/schemas/QrCode"
+                        },
+                        "image": {
+                          "$ref": "#/components/schemas/QrImage"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "QR code created successfully",
+                  "data": {
+                    "qr": {
+                      "id": "7f4d2b1c-9e8a-4b3c-8d2e-5a6b7c8d9e0f",
+                      "title": "Launch QR",
+                      "targetUrl": "https://linkflowurl.com/launch",
+                      "linkId": "0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21",
+                      "createdAt": "2026-11-02T10:00:00.000Z",
+                      "updatedAt": "2026-11-02T10:00:00.000Z"
+                    },
+                    "image": {
+                      "mimeType": "image/png",
+                      "encoding": "data-uri",
+                      "dataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg...",
+                      "width": 512,
+                      "margin": 2,
+                      "errorCorrectionLevel": "M",
+                      "dark": "#000000",
+                      "light": "#FFFFFF"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Varies by field, for example: originalUrl must be a valid http or https URL. Request body must be valid JSON.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "VALIDATION_ERROR": {
+                    "value": {
+                      "success": false,
+                      "message": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+                      "error": {
+                        "code": "VALIDATION_ERROR"
+                      }
+                    }
+                  },
+                  "INVALID_JSON": {
+                    "value": {
+                      "success": false,
+                      "message": "Request body must be valid JSON.",
+                      "error": {
+                        "code": "INVALID_JSON"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, revoked or expired API key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "MISSING_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "An API key is required in the X-API-Key header.",
+                      "error": {
+                        "code": "MISSING_API_KEY"
+                      }
+                    }
+                  },
+                  "INVALID_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "Invalid API credentials.",
+                      "error": {
+                        "code": "INVALID_API_KEY"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key lacks the required scope, or the account no longer exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "This API key lacks the required scope: qr:write.",
+                  "error": {
+                    "code": "INSUFFICIENT_SCOPE"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "The path exists but the method is not supported.",
+            "headers": {
+              "Allow": {
+                "description": "Supported methods for this path.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Method not allowed for this endpoint.",
+                  "error": {
+                    "code": "METHOD_NOT_ALLOWED"
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request body must not exceed 65536 bytes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "PAYLOAD_TOO_LARGE": {
+                    "value": {
+                      "success": false,
+                      "message": "Request body must not exceed 65536 bytes.",
+                      "error": {
+                        "code": "PAYLOAD_TOO_LARGE"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "An unexpected error occurred.",
+                  "error": {
+                    "code": "INTERNAL_ERROR"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/qr/:id": {
+      "get": {
+        "operationId": "getQr",
+        "summary": "Retrieve QR metadata and render its image.",
+        "description": "Returns QR metadata and a freshly rendered PNG data URI using the default image options (512 px, margin 2, ECC M, black on white).",
+        "tags": [
+          "QR codes"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-required-scope": "qr:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "QR code id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "QR metadata plus the default-rendered image.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "qr",
+                        "image"
+                      ],
+                      "properties": {
+                        "qr": {
+                          "$ref": "#/components/schemas/QrCode"
+                        },
+                        "image": {
+                          "$ref": "#/components/schemas/QrImage"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "QR code retrieved successfully",
+                  "data": {
+                    "qr": {
+                      "id": "7f4d2b1c-9e8a-4b3c-8d2e-5a6b7c8d9e0f",
+                      "title": "Launch QR",
+                      "targetUrl": "https://linkflowurl.com/launch",
+                      "linkId": "0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21",
+                      "createdAt": "2026-11-02T10:00:00.000Z",
+                      "updatedAt": "2026-11-02T10:00:00.000Z"
+                    },
+                    "image": {
+                      "mimeType": "image/png",
+                      "encoding": "data-uri",
+                      "dataUrl": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUg...",
+                      "width": 512,
+                      "margin": 2,
+                      "errorCorrectionLevel": "M",
+                      "dark": "#000000",
+                      "light": "#FFFFFF"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "VALIDATION_ERROR": {
+                    "value": {
+                      "success": false,
+                      "message": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+                      "error": {
+                        "code": "VALIDATION_ERROR"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, revoked or expired API key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "MISSING_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "An API key is required in the X-API-Key header.",
+                      "error": {
+                        "code": "MISSING_API_KEY"
+                      }
+                    }
+                  },
+                  "INVALID_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "Invalid API credentials.",
+                      "error": {
+                        "code": "INVALID_API_KEY"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key lacks the required scope, or the account no longer exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "This API key lacks the required scope: qr:read.",
+                  "error": {
+                    "code": "INSUFFICIENT_SCOPE"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Link not found. (resource-specific)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "NOT_FOUND": {
+                    "value": {
+                      "success": false,
+                      "message": "Link not found. (resource-specific)",
+                      "error": {
+                        "code": "NOT_FOUND"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "The path exists but the method is not supported.",
+            "headers": {
+              "Allow": {
+                "description": "Supported methods for this path.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Method not allowed for this endpoint.",
+                  "error": {
+                    "code": "METHOD_NOT_ALLOWED"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "An unexpected error occurred.",
+                  "error": {
+                    "code": "INTERNAL_ERROR"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteQr",
+        "summary": "Delete one QR code by id.",
+        "description": "Deletes QR metadata owned by the authenticated developer. The linked short link, if any, is not deleted.",
+        "tags": [
+          "QR codes"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-required-scope": "qr:delete",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "QR code id.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The id of the deleted QR code.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "id"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "QR code deleted successfully",
+                  "data": {
+                    "id": "7f4d2b1c-9e8a-4b3c-8d2e-5a6b7c8d9e0f"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "VALIDATION_ERROR": {
+                    "value": {
+                      "success": false,
+                      "message": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+                      "error": {
+                        "code": "VALIDATION_ERROR"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, revoked or expired API key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "MISSING_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "An API key is required in the X-API-Key header.",
+                      "error": {
+                        "code": "MISSING_API_KEY"
+                      }
+                    }
+                  },
+                  "INVALID_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "Invalid API credentials.",
+                      "error": {
+                        "code": "INVALID_API_KEY"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key lacks the required scope, or the account no longer exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "This API key lacks the required scope: qr:delete.",
+                  "error": {
+                    "code": "INSUFFICIENT_SCOPE"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Link not found. (resource-specific)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "NOT_FOUND": {
+                    "value": {
+                      "success": false,
+                      "message": "Link not found. (resource-specific)",
+                      "error": {
+                        "code": "NOT_FOUND"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "The path exists but the method is not supported.",
+            "headers": {
+              "Allow": {
+                "description": "Supported methods for this path.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Method not allowed for this endpoint.",
+                  "error": {
+                    "code": "METHOD_NOT_ALLOWED"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "An unexpected error occurred.",
+                  "error": {
+                    "code": "INTERNAL_ERROR"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/qr/:id/analytics": {
+      "get": {
+        "operationId": "qrAnalytics",
+        "summary": "Read analytics for a QR code, when its link is still available.",
+        "description": "QR scans are not tracked. For a QR created from a short link, this endpoint reports that link's click analytics with tracking set to linked-link-clicks. For a standalone QR code it returns supported: false.",
+        "tags": [
+          "Analytics"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-required-scope": "analytics:read",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "description": "QR code id.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "description": "Number of days in the daily series, ending today. Ignored when supported is false.",
+            "schema": {
+              "type": "integer",
+              "default": 7,
+              "minimum": 1,
+              "maximum": 90
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Either linked-link click analytics or an explicit unsupported response.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "oneOf": [
+                        {
+                          "$ref": "#/components/schemas/QrAnalyticsLinked"
+                        },
+                        {
+                          "$ref": "#/components/schemas/QrAnalyticsUnsupported"
+                        }
+                      ]
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "QR code analytics retrieved successfully",
+                  "data": {
+                    "qr": {
+                      "id": "7f4d2b1c-9e8a-4b3c-8d2e-5a6b7c8d9e0f",
+                      "title": "Launch QR",
+                      "targetUrl": "https://linkflowurl.com/launch",
+                      "linkId": "0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21",
+                      "createdAt": "2026-11-02T10:00:00.000Z",
+                      "updatedAt": "2026-11-02T10:00:00.000Z"
+                    },
+                    "supported": true,
+                    "tracking": "linked-link-clicks",
+                    "link": {
+                      "id": "0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21",
+                      "originalUrl": "https://example.com/launch",
+                      "shortUrl": "https://linkflowurl.com/launch",
+                      "shortCode": "launch",
+                      "customAlias": "launch",
+                      "title": "Launch page",
+                      "isActive": true,
+                      "expiresAt": null,
+                      "clicks": 42,
+                      "createdAt": "2026-11-01T09:12:45.000Z",
+                      "updatedAt": "2026-11-01T09:12:45.000Z"
+                    },
+                    "totalClicks": 42,
+                    "range": {
+                      "days": 7,
+                      "since": "2026-11-08",
+                      "until": "2026-11-14"
+                    },
+                    "daily": [
+                      {
+                        "date": "2026-11-08",
+                        "clicks": 3
+                      },
+                      {
+                        "date": "2026-11-09",
+                        "clicks": 0
+                      },
+                      {
+                        "date": "2026-11-10",
+                        "clicks": 9
+                      },
+                      {
+                        "date": "2026-11-11",
+                        "clicks": 4
+                      },
+                      {
+                        "date": "2026-11-12",
+                        "clicks": 12
+                      },
+                      {
+                        "date": "2026-11-13",
+                        "clicks": 7
+                      },
+                      {
+                        "date": "2026-11-14",
+                        "clicks": 7
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "VALIDATION_ERROR": {
+                    "value": {
+                      "success": false,
+                      "message": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+                      "error": {
+                        "code": "VALIDATION_ERROR"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, revoked or expired API key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "MISSING_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "An API key is required in the X-API-Key header.",
+                      "error": {
+                        "code": "MISSING_API_KEY"
+                      }
+                    }
+                  },
+                  "INVALID_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "Invalid API credentials.",
+                      "error": {
+                        "code": "INVALID_API_KEY"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key lacks the required scope, or the account no longer exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "This API key lacks the required scope: analytics:read.",
+                  "error": {
+                    "code": "INSUFFICIENT_SCOPE"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Link not found. (resource-specific)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "NOT_FOUND": {
+                    "value": {
+                      "success": false,
+                      "message": "Link not found. (resource-specific)",
+                      "error": {
+                        "code": "NOT_FOUND"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "The path exists but the method is not supported.",
+            "headers": {
+              "Allow": {
+                "description": "Supported methods for this path.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Method not allowed for this endpoint.",
+                  "error": {
+                    "code": "METHOD_NOT_ALLOWED"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "An unexpected error occurred.",
+                  "error": {
+                    "code": "INTERNAL_ERROR"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/analytics/overview": {
+      "get": {
+        "operationId": "analyticsOverview",
+        "summary": "Read account-level link and QR totals plus a click series.",
+        "description": "Aggregates data LinkFlow already records: link counts, total clicks, QR counts and a per-day click series summed across the developer's links.",
+        "tags": [
+          "Analytics"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "x-required-scope": "analytics:read",
+        "parameters": [
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "description": "Number of days in the daily series, ending today.",
+            "schema": {
+              "type": "integer",
+              "default": 7,
+              "minimum": 1,
+              "maximum": 90
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Account totals, a daily click series and a small recent-QR sample.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "success",
+                    "message",
+                    "data"
+                  ],
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "data": {
+                      "type": "object",
+                      "required": [
+                        "totals",
+                        "range",
+                        "daily",
+                        "mostClickedLink",
+                        "recentQrCodes"
+                      ],
+                      "properties": {
+                        "totals": {
+                          "type": "object",
+                          "required": [
+                            "links",
+                            "activeLinks",
+                            "clicks",
+                            "qrCodes",
+                            "linkedQrCodes"
+                          ],
+                          "properties": {
+                            "links": {
+                              "type": "integer"
+                            },
+                            "activeLinks": {
+                              "type": "integer"
+                            },
+                            "clicks": {
+                              "type": "integer"
+                            },
+                            "qrCodes": {
+                              "type": "integer"
+                            },
+                            "linkedQrCodes": {
+                              "type": "integer"
+                            }
+                          }
+                        },
+                        "range": {
+                          "$ref": "#/components/schemas/DateRange"
+                        },
+                        "daily": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/DailyClickPoint"
+                          }
+                        },
+                        "mostClickedLink": {
+                          "oneOf": [
+                            {
+                              "$ref": "#/components/schemas/Link"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "recentQrCodes": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/QrCode"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "success": true,
+                  "message": "Analytics overview retrieved successfully",
+                  "data": {
+                    "totals": {
+                      "links": 12,
+                      "activeLinks": 11,
+                      "clicks": 482,
+                      "qrCodes": 4,
+                      "linkedQrCodes": 3
+                    },
+                    "range": {
+                      "days": 7,
+                      "since": "2026-11-08",
+                      "until": "2026-11-14"
+                    },
+                    "daily": [
+                      {
+                        "date": "2026-11-08",
+                        "clicks": 12
+                      },
+                      {
+                        "date": "2026-11-09",
+                        "clicks": 8
+                      },
+                      {
+                        "date": "2026-11-10",
+                        "clicks": 31
+                      },
+                      {
+                        "date": "2026-11-11",
+                        "clicks": 22
+                      },
+                      {
+                        "date": "2026-11-12",
+                        "clicks": 41
+                      },
+                      {
+                        "date": "2026-11-13",
+                        "clicks": 27
+                      },
+                      {
+                        "date": "2026-11-14",
+                        "clicks": 19
+                      }
+                    ],
+                    "mostClickedLink": {
+                      "id": "0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21",
+                      "originalUrl": "https://example.com/launch",
+                      "shortUrl": "https://linkflowurl.com/launch",
+                      "shortCode": "launch",
+                      "customAlias": "launch",
+                      "title": "Launch page",
+                      "isActive": true,
+                      "expiresAt": null,
+                      "clicks": 142,
+                      "createdAt": "2026-11-01T09:12:45.000Z",
+                      "updatedAt": "2026-11-01T09:12:45.000Z"
+                    },
+                    "recentQrCodes": [
+                      {
+                        "id": "7f4d2b1c-9e8a-4b3c-8d2e-5a6b7c8d9e0f",
+                        "title": "Launch QR",
+                        "targetUrl": "https://linkflowurl.com/launch",
+                        "linkId": "0e7c3a9e-2f4b-4a1f-9c55-1f0e6f6f3d21",
+                        "createdAt": "2026-11-02T10:00:00.000Z",
+                        "updatedAt": "2026-11-02T10:00:00.000Z"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "VALIDATION_ERROR": {
+                    "value": {
+                      "success": false,
+                      "message": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+                      "error": {
+                        "code": "VALIDATION_ERROR"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Missing, invalid, revoked or expired API key.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "examples": {
+                  "MISSING_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "An API key is required in the X-API-Key header.",
+                      "error": {
+                        "code": "MISSING_API_KEY"
+                      }
+                    }
+                  },
+                  "INVALID_API_KEY": {
+                    "value": {
+                      "success": false,
+                      "message": "Invalid API credentials.",
+                      "error": {
+                        "code": "INVALID_API_KEY"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The API key lacks the required scope, or the account no longer exists.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "This API key lacks the required scope: analytics:read.",
+                  "error": {
+                    "code": "INSUFFICIENT_SCOPE"
+                  }
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "The path exists but the method is not supported.",
+            "headers": {
+              "Allow": {
+                "description": "Supported methods for this path.",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "Method not allowed for this endpoint.",
+                  "error": {
+                    "code": "METHOD_NOT_ALLOWED"
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Unexpected server error.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "success": false,
+                  "message": "An unexpected error occurred.",
+                  "error": {
+                    "code": "INTERNAL_ERROR"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "ApiKeyAuth": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-API-Key",
+        "description": "Send a test or live API key created in the LinkFlow Developer Dashboard. Keys are shown once."
+      }
+    },
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "success",
+          "message",
+          "error"
+        ],
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "const": false
+          },
+          "message": {
+            "type": "string"
+          },
+          "error": {
+            "type": "object",
+            "required": [
+              "code"
+            ],
+            "properties": {
+              "code": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      },
+      "Link": {
+        "type": "object",
+        "required": [
+          "id",
+          "originalUrl",
+          "shortUrl",
+          "shortCode",
+          "customAlias",
+          "title",
+          "isActive",
+          "expiresAt",
+          "clicks",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "originalUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "shortUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "shortCode": {
+            "type": "string"
+          },
+          "customAlias": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "isActive": {
+            "type": "boolean"
+          },
+          "expiresAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time"
+          },
+          "clicks": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "QrCode": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "targetUrl",
+          "linkId",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "targetUrl": {
+            "type": "string",
+            "format": "uri"
+          },
+          "linkId": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "QrImage": {
+        "type": "object",
+        "required": [
+          "mimeType",
+          "encoding",
+          "dataUrl",
+          "width",
+          "margin",
+          "errorCorrectionLevel",
+          "dark",
+          "light"
+        ],
+        "properties": {
+          "mimeType": {
+            "type": "string",
+            "const": "image/png"
+          },
+          "encoding": {
+            "type": "string",
+            "const": "data-uri"
+          },
+          "dataUrl": {
+            "type": "string",
+            "description": "PNG encoded as a data URI."
+          },
+          "width": {
+            "type": "integer"
+          },
+          "margin": {
+            "type": "integer"
+          },
+          "errorCorrectionLevel": {
+            "type": "string",
+            "enum": [
+              "L",
+              "M",
+              "Q",
+              "H"
+            ]
+          },
+          "dark": {
+            "type": "string"
+          },
+          "light": {
+            "type": "string"
+          }
+        }
+      },
+      "DailyClickPoint": {
+        "type": "object",
+        "required": [
+          "date",
+          "clicks"
+        ],
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "UTC calendar day (YYYY-MM-DD)."
+          },
+          "clicks": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "DateRange": {
+        "type": "object",
+        "required": [
+          "days",
+          "since",
+          "until"
+        ],
+        "properties": {
+          "days": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 90
+          },
+          "since": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "First date in the series (YYYY-MM-DD)."
+          },
+          "until": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Last date in the series (YYYY-MM-DD)."
+          }
+        }
+      },
+      "QrAnalyticsLinked": {
+        "type": "object",
+        "required": [
+          "qr",
+          "supported",
+          "tracking",
+          "link",
+          "totalClicks",
+          "range",
+          "daily"
+        ],
+        "properties": {
+          "qr": {
+            "$ref": "#/components/schemas/QrCode"
+          },
+          "supported": {
+            "type": "boolean",
+            "const": true
+          },
+          "tracking": {
+            "type": "string",
+            "const": "linked-link-clicks"
+          },
+          "link": {
+            "$ref": "#/components/schemas/Link"
+          },
+          "totalClicks": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "range": {
+            "$ref": "#/components/schemas/DateRange"
+          },
+          "daily": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DailyClickPoint"
+            }
+          }
+        }
+      },
+      "QrAnalyticsUnsupported": {
+        "type": "object",
+        "required": [
+          "qr",
+          "supported",
+          "reason"
+        ],
+        "properties": {
+          "qr": {
+            "$ref": "#/components/schemas/QrCode"
+          },
+          "supported": {
+            "type": "boolean",
+            "const": false
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  },
+  "x-linkflow-scopes": [
+    {
+      "id": "links:read",
+      "label": "Read links",
+      "description": "List links and retrieve a single link.",
+      "endpoints": [
+        "GET /api/v1/links",
+        "GET /api/v1/links/:id"
+      ]
+    },
+    {
+      "id": "links:write",
+      "label": "Create links",
+      "description": "Create a short link.",
+      "endpoints": [
+        "POST /api/v1/links"
+      ]
+    },
+    {
+      "id": "links:delete",
+      "label": "Delete links",
+      "description": "Delete a short link.",
+      "endpoints": [
+        "DELETE /api/v1/links/:id"
+      ]
+    },
+    {
+      "id": "qr:read",
+      "label": "Read QR codes",
+      "description": "List QR codes and retrieve a single QR code.",
+      "endpoints": [
+        "GET /api/v1/qr",
+        "GET /api/v1/qr/:id"
+      ]
+    },
+    {
+      "id": "qr:write",
+      "label": "Create QR codes",
+      "description": "Create a QR code.",
+      "endpoints": [
+        "POST /api/v1/qr"
+      ]
+    },
+    {
+      "id": "qr:delete",
+      "label": "Delete QR codes",
+      "description": "Delete a QR code.",
+      "endpoints": [
+        "DELETE /api/v1/qr/:id"
+      ]
+    },
+    {
+      "id": "analytics:read",
+      "label": "Read analytics",
+      "description": "Read the analytics overview, per-link click series and QR analytics.",
+      "endpoints": [
+        "GET /api/v1/analytics/overview",
+        "GET /api/v1/links/:id/analytics",
+        "GET /api/v1/qr/:id/analytics"
+      ]
+    }
+  ],
+  "x-linkflow-errors": [
+    {
+      "status": 400,
+      "code": "VALIDATION_ERROR",
+      "message": "Varies by field, for example: originalUrl must be a valid http or https URL.",
+      "meaning": "A path parameter, query parameter or request body field failed validation.",
+      "handling": "Show the message next to the offending field. Do not retry until the input is corrected."
+    },
+    {
+      "status": 400,
+      "code": "INVALID_JSON",
+      "message": "Request body must be valid JSON.",
+      "meaning": "The request body could not be parsed as JSON.",
+      "handling": "Serialize the body with a JSON encoder and set Content-Type: application/json."
+    },
+    {
+      "status": 401,
+      "code": "MISSING_API_KEY",
+      "message": "An API key is required in the X-API-Key header.",
+      "meaning": "No X-API-Key header was sent, or it was blank.",
+      "handling": "Read the key from a server-side secret store and send it in the X-API-Key header."
+    },
+    {
+      "status": 401,
+      "code": "INVALID_API_KEY",
+      "message": "Invalid API credentials.",
+      "meaning": "The key is malformed, unknown, or its secret does not match.",
+      "handling": "Check for truncation or a test/live mix-up. Never retry a malformed key in a loop."
+    },
+    {
+      "status": 401,
+      "code": "API_KEY_REVOKED",
+      "message": "This API key has been revoked.",
+      "meaning": "The key authenticated successfully but has been revoked in the dashboard.",
+      "handling": "Stop using the key. Create a replacement in the Developer Dashboard."
+    },
+    {
+      "status": 401,
+      "code": "API_KEY_EXPIRED",
+      "message": "This API key has expired.",
+      "meaning": "The key authenticated successfully but its expiresAt timestamp is in the past.",
+      "handling": "Rotate the key or create one with a new expiration date."
+    },
+    {
+      "status": 403,
+      "code": "INSUFFICIENT_SCOPE",
+      "message": "This API key lacks the required scope: links:write.",
+      "meaning": "The key authenticated but was not granted the scope this endpoint requires.",
+      "handling": "Create a new key with the required scope, or call an endpoint the current key is allowed to use."
+    },
+    {
+      "status": 403,
+      "code": "DEVELOPER_NOT_PROVISIONED",
+      "message": "The developer account for this API key no longer exists.",
+      "meaning": "The owning LinkFlow account could not be resolved. This should only happen after account deletion.",
+      "handling": "Stop using the key and contact support if the account should still exist."
+    },
+    {
+      "status": 404,
+      "code": "NOT_FOUND",
+      "message": "Link not found. (resource-specific)",
+      "meaning": "The resource does not exist, belongs to another developer, or the path is not a public API route.",
+      "handling": "Treat as not found. Do not retry automatically; ownership is never disclosed."
+    },
+    {
+      "status": 405,
+      "code": "METHOD_NOT_ALLOWED",
+      "message": "Method not allowed for this endpoint.",
+      "meaning": "The path exists but does not support this HTTP method. The Allow response header lists supported methods.",
+      "handling": "Use one of the methods listed in the Allow header."
+    },
+    {
+      "status": 409,
+      "code": "ALIAS_TAKEN",
+      "message": "That customAlias is already in use.",
+      "meaning": "The requested customAlias is already used by an existing short link.",
+      "handling": "Choose another alias or omit customAlias to let LinkFlow generate one."
+    },
+    {
+      "status": 413,
+      "code": "PAYLOAD_TOO_LARGE",
+      "message": "Request body must not exceed 65536 bytes.",
+      "meaning": "The JSON body is larger than the 64 KiB public API limit.",
+      "handling": "Send a smaller body. QR images are generated from a URL, not uploaded."
+    },
+    {
+      "status": 500,
+      "code": "INTERNAL_ERROR",
+      "message": "An unexpected error occurred.",
+      "meaning": "The server failed while handling an authenticated request.",
+      "handling": "Retry with exponential backoff for idempotent reads. Report persistent failures with the request timestamp."
+    },
+    {
+      "status": 503,
+      "code": "API_KEY_HASH_NOT_CONFIGURED",
+      "message": "Developer API key hashing is not configured on this server.",
+      "meaning": "The server is missing a valid API_KEY_HASH_SECRET.",
+      "handling": "Server configuration issue. Contact the operator; do not retry in a tight loop."
+    },
+    {
+      "status": 503,
+      "code": "DATABASE_NOT_CONFIGURED",
+      "message": "Developer API key persistence is not configured on this server.",
+      "meaning": "The server has no usable PostgreSQL connection for API keys.",
+      "handling": "Server configuration issue. Contact the operator; do not retry in a tight loop."
+    }
+  ]
+}

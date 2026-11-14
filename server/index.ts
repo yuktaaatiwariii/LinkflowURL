@@ -1,7 +1,14 @@
 import http from 'http';
+import fs from 'fs';
+import path from 'path';
 import { query, getDatabasePool } from './db';
 import { verifyClerkToken } from './auth';
 import { runMigrations } from './schema';
+import { handlePublicApiRequest } from './developer-api/public-api/public-api.module';
+import { handleManagementRequest } from './developer-api/management/developer-keys.module';
+import type { ManagementApiDependencies } from './developer-api/management/management-auth';
+import type { DeveloperApiDependencies } from './developer-api/interfaces/api-developer.interface';
+import type { LinkRecord, QrRecord, UserRecord } from './types';
 import {
   generateShortCode,
   isValidBase62,
@@ -20,38 +27,7 @@ import {
   isValidPlatform,
 } from './notifications';
 
-export interface UserRecord {
-  id: string;
-  clerk_user_id: string;
-  email: string;
-  full_name: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface LinkRecord {
-  id: string;
-  user_id: string;
-  original_url: string;
-  short_code: string;
-  custom_alias: string | null;
-  title: string | null;
-  is_active: boolean;
-  expires_at: string | null;
-  clicks_count: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface QrRecord {
-  id: string;
-  user_id: string;
-  link_id: string | null;
-  title: string;
-  target_url: string;
-  created_at: string;
-  updated_at: string;
-}
+export type { LinkRecord, QrRecord, UserRecord } from './types';
 
 // In-memory fallback repository when PostgreSQL DATABASE_URL is not connected yet
 class MockMemoryStore {
@@ -226,6 +202,22 @@ export async function getUserFromDb(clerkUserId: string): Promise<UserRecord | n
   }
 
   return memoryStore.getUser(clerkUserId);
+}
+
+/** Resolves an owner by internal LinkFlow user id (used by API key auth). */
+export async function getUserById(userId: string): Promise<UserRecord | null> {
+  const hasPg = !!getDatabasePool();
+  if (hasPg) {
+    try {
+      const rows = await query<UserRecord>('SELECT * FROM users WHERE id = $1 LIMIT 1', [userId]);
+      if (rows.length > 0) return rows[0];
+      return null;
+    } catch (err: any) {
+      console.warn('[PostgreSQL getUserById fallback to memory]:', err.message);
+    }
+  }
+
+  return memoryStore.users.get(userId) || null;
 }
 
 export async function getUserLinks(userId: string): Promise<LinkRecord[]> {
@@ -504,14 +496,140 @@ export async function deleteQrCodeFromDb(id: string, userId: string): Promise<bo
 }
 
 /**
+ * Repository adapters handed to the developer API. Everything delegates to the
+ * existing data-access functions, so short-code generation, duplicate QR
+ * collapsing and `user_id` ownership predicates are reused — not reimplemented.
+ */
+export const developerApiDependencies: DeveloperApiDependencies = {
+  getUserByClerkId: getUserFromDb,
+  getUserById,
+  listLinks: getUserLinks,
+  getLink: getUserLinkById,
+  findLinkByShortCode: getLinkByShortCode,
+  createLink: (userId, input) =>
+    createUserLink(userId, input.originalUrl, input.title, input.customAlias),
+  deleteLink: deleteUserLink,
+  listQrCodes: getQrCodesFromDb,
+  getQrCode: getQrCodeFromDb,
+  createQrCode: (userId, input) =>
+    createQrCodeInDb(userId, input.targetUrl, input.title, input.linkId),
+  deleteQrCode: deleteQrCodeFromDb,
+};
+
+/**
+ * Dependencies for the JWT-authenticated API key management routes. Reuses the
+ * existing Clerk verification and user repository; nothing is re-implemented.
+ */
+export const managementApiDependencies: ManagementApiDependencies = {
+  verifyToken: verifyClerkToken,
+  getUserByClerkId: getUserFromDb,
+  syncUser: (clerkUserId, email) => syncUserInDb(clerkUserId, email, null),
+};
+
+export interface ServerOptions {
+  /**
+   * Constructor-only test seam for the management routes. Production never
+   * sets this; the default resolver always verifies a Clerk JWT.
+   */
+  resolveManagementUser?: ManagementApiDependencies['resolveManagementUser'];
+  /**
+   * Optional test seam for the Clerk JWT verification used by notification
+   * and user routes. Production never sets this; the default is `verifyClerkToken`.
+   * Allows tests to inject a mock verifier without changing auth logic.
+   */
+  verifyToken?: typeof verifyClerkToken;
+}
+
+/**
+ * CORS allowlist for browser clients.
+ *
+ * Native mobile clients and server-to-server callers do not send an Origin
+ * header, so they are unaffected. A browser is only granted cross-origin
+ * access when its Origin is explicitly configured:
+ *
+ *   CORS_ALLOWED_ORIGINS=https://linkflowurl.com,https://www.linkflowurl.com
+ *
+ * Development additionally allows the Expo web dev-server ports. `*` is
+ * honoured only when an operator explicitly configures it.
+ */
+const CORS_DEV_ORIGINS = [
+  'http://localhost:8081',
+  'http://127.0.0.1:8081',
+  'http://localhost:19006',
+  'http://127.0.0.1:19006',
+  'http://localhost:3000',
+  'http://127.0.0.1:3000',
+];
+
+export function resolveAllowedCorsOrigins(): Set<string> {
+  const configured = (process.env.CORS_ALLOWED_ORIGINS || '')
+    .split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+  const appOrigins = [process.env.PUBLIC_APP_ORIGIN, process.env.EXPO_PUBLIC_APP_ORIGIN]
+    .filter((value): value is string => Boolean(value && value.trim()))
+    .map((value) => value.trim());
+  const allowed = new Set<string>([...configured, ...appOrigins]);
+
+  if (process.env.NODE_ENV !== 'production') {
+    for (const origin of CORS_DEV_ORIGINS) allowed.add(origin);
+  }
+  return allowed;
+}
+
+/** Public, read-only documentation artifacts served next to the API. */
+const DOC_ARTIFACTS: Record<string, string> = {
+  '/api/openapi.json': 'openapi.json',
+  '/api/postman/collection.json': 'linkflow-postman-collection.json',
+  '/api/postman/environment.json': 'linkflow-postman-environment.json',
+};
+
+const docArtifactCache = new Map<string, string>();
+
+function readDocArtifact(filename: string): string | null {
+  const cached = docArtifactCache.get(filename);
+  if (cached) return cached;
+  try {
+    const filePath = path.join(process.cwd(), 'public', filename);
+    const contents = fs.readFileSync(filePath, 'utf8');
+    docArtifactCache.set(filename, contents);
+    return contents;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Creates the lightweight LinkFlow API HTTP server
  */
-export function createServer() {
+export function createServer(options: ServerOptions = {}) {
+  const managementDependencies: ManagementApiDependencies = options.resolveManagementUser
+    ? { ...managementApiDependencies, resolveManagementUser: options.resolveManagementUser }
+    : managementApiDependencies;
+
+  // Use provided test verifier or default to production verifyClerkToken
+  const verifyToken = options.verifyToken ?? verifyClerkToken;
+
+  const allowedCorsOrigins = resolveAllowedCorsOrigins();
+
   const server = http.createServer(async (req, res) => {
-    // CORS headers
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    // CORS: only approved browser origins receive an allow header. Requests
+    // without an Origin (mobile apps, curl, server-to-server) are unaffected.
+    const requestOrigin = typeof req.headers.origin === 'string' ? req.headers.origin : null;
+    res.setHeader('Vary', 'Origin');
+    if (requestOrigin) {
+      const allowed =
+        allowedCorsOrigins.has('*') ||
+        allowedCorsOrigins.has(requestOrigin);
+      if (allowed) {
+        res.setHeader(
+          'Access-Control-Allow-Origin',
+          allowedCorsOrigins.has('*') ? '*' : requestOrigin
+        );
+      }
+    }
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-API-Key');
     res.setHeader('Access-Control-Max-Age', '86400');
 
     if (req.method === 'OPTIONS') {
@@ -567,10 +685,57 @@ export function createServer() {
       });
     }
 
+    // Public documentation artifacts (OpenAPI + Postman). Read-only, no auth,
+    // no secrets. Served from the generated files in `public/`.
+    if (DOC_ARTIFACTS[pathname] && req.method === 'GET') {
+      const artifact = readDocArtifact(DOC_ARTIFACTS[pathname]);
+      if (!artifact) {
+        return sendJson(404, {
+          success: false,
+          message: 'Documentation artifact has not been generated on this server.',
+          error: { code: 'NOT_FOUND' },
+        });
+      }
+      res.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Content-Length': Buffer.byteLength(artifact),
+        'Cache-Control': 'public, max-age=300',
+      });
+      res.end(artifact);
+      return;
+    }
+
     // Run database migrations on demand
     if (pathname === '/api/admin/migrate' && req.method === 'POST') {
       const result = await runMigrations();
       return sendJson(result.success ? 200 : 500, result);
+    }
+
+    // API key management (JWT-authenticated). Dispatched before the global
+    // Bearer block so it uses the same envelope as `/api/v1` while remaining
+    // completely independent from developer API key authentication.
+    if (pathname === '/api/developer' || pathname.startsWith('/api/developer/')) {
+      await handleManagementRequest(
+        req,
+        res,
+        pathname,
+        parsedUrl.searchParams,
+        managementDependencies
+      );
+      return;
+    }
+
+    // Developer API. Dispatched before the Bearer/JWT block below so API-key
+    // authentication is completely independent from Clerk authentication.
+    if (pathname === '/api/v1' || pathname.startsWith('/api/v1/')) {
+      await handlePublicApiRequest(
+        req,
+        res,
+        pathname,
+        parsedUrl.searchParams,
+        developerApiDependencies
+      );
+      return;
     }
 
     // Extract Bearer Token for protected endpoints
@@ -580,7 +745,7 @@ export function createServer() {
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.substring(7);
       try {
-        const verified = await verifyClerkToken(token);
+        const verified = await verifyToken(token);
         authContext = {
           clerkUserId: verified.clerkUserId,
           email: verified.email,

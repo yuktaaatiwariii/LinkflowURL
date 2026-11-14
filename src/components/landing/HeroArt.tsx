@@ -1,95 +1,26 @@
-import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import React from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { AppIcon } from '../AppIcon';
-import { G, L, glow } from './landingTheme';
-import { RadialGlow } from './landingPrimitives';
+import { L, glow } from './landingTheme';
 
 const SCREEN_BARS = [16, 24, 13, 30, 21, 34, 26];
 
 /**
- * Hero visual: a tilted phone showing the shortening flow, a floating QR
- * card, a short-link chip, and decorative purple glows.
+ * Hero visual: a tilted phone showing the shortening flow, a QR card, and a
+ * short-link chip.
  *
- * Entirely vector / native-view based, so it stays crisp at every density
- * and costs nothing to download.
+ * Entirely vector / native-view based, so it stays crisp at every density and
+ * costs nothing to download. Monochrome composition — no ambient glows,
+ * rings or floating animation.
  */
 export function HeroArt() {
-  const float = useRef(new Animated.Value(0)).current;
-  const floatAlt = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const loopA = Animated.loop(
-      Animated.sequence([
-        Animated.timing(float, {
-          toValue: 1,
-          duration: 2600,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(float, {
-          toValue: 0,
-          duration: 2600,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-
-    const loopB = Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatAlt, {
-          toValue: 1,
-          duration: 3200,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-        Animated.timing(floatAlt, {
-          toValue: 0,
-          duration: 3200,
-          easing: Easing.inOut(Easing.quad),
-          useNativeDriver: true,
-        }),
-      ])
-    );
-
-    loopA.start();
-    loopB.start();
-    return () => {
-      loopA.stop();
-      loopB.stop();
-    };
-  }, [float, floatAlt]);
-
   return (
     <View style={styles.wrap} accessible accessibilityLabel="LinkFlow app preview with a shortened link and QR code">
-      {/* Ambient light */}
-      <RadialGlow
-        size={330}
-        color="#792CF0"
-        opacity={0.42}
-        style={styles.glowLarge}
-      />
-      <RadialGlow
-        size={210}
-        color="#C4A8FF"
-        opacity={0.16}
-        style={styles.glowSmall}
-      />
-
-      <View pointerEvents="none" style={styles.ringOuter} />
-      <View pointerEvents="none" style={styles.ringInner} />
-
       {/* Tilted phone */}
       <View style={styles.phoneShadow}>
         <View style={styles.phone}>
-          <LinearGradient
-            colors={G.screen}
-            start={{ x: 0.1, y: 0 }}
-            end={{ x: 0.9, y: 1 }}
-            style={styles.screen}
-          >
+          <View style={styles.screen}>
             <View style={styles.notch} />
             <View style={styles.statusRow}>
               <Text style={styles.statusText}>9:41</Text>
@@ -102,7 +33,7 @@ export function HeroArt() {
 
             <View style={styles.screenHeader}>
               <View style={styles.screenLogo}>
-                <AppIcon name="link" size={11} color="#FFFFFF" />
+                <AppIcon name="link" size={11} color={L.bg} />
               </View>
               <Text style={styles.screenBrand}>LinkFlow</Text>
               <View style={styles.screenBell}>
@@ -110,19 +41,14 @@ export function HeroArt() {
               </View>
             </View>
 
-            <LinearGradient
-              colors={G.brand}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.screenInput}
-            >
+            <View style={styles.screenInput}>
               <Text style={styles.screenInputText} numberOfLines={1}>
                 yourbrand.com/campaign…
               </Text>
               <View style={styles.screenSend}>
-                <AppIcon name="arrow-right" size={11} color="#FFFFFF" />
+                <AppIcon name="arrow-right" size={11} color={L.bg} />
               </View>
-            </LinearGradient>
+            </View>
 
             <View style={styles.screenResult}>
               <View style={styles.screenResultCopy}>
@@ -130,7 +56,7 @@ export function HeroArt() {
                 <Text style={styles.screenResultUrl}>linkflow.url/x7Kp2</Text>
               </View>
               <View style={styles.screenCopyBtn}>
-                <AppIcon name="copy" size={11} color={L.lavender} />
+                <AppIcon name="copy" size={11} color={L.textSecondary} />
               </View>
             </View>
 
@@ -143,79 +69,59 @@ export function HeroArt() {
 
             <View style={styles.screenBars}>
               {SCREEN_BARS.map((height, index) => (
-                <LinearGradient
+                <View
                   key={index}
-                  colors={index === SCREEN_BARS.length - 2 ? ['#D9B8FF', '#9B4DFF'] : ['#9B4DFF', '#5A17C4']}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 0, y: 1 }}
-                  style={[styles.screenBar, { height }]}
+                  style={[
+                    styles.screenBar,
+                    { height },
+                    index === SCREEN_BARS.length - 2 && styles.screenBarActive,
+                  ]}
                 />
               ))}
             </View>
 
             <View style={styles.screenRow}>
               <View style={styles.screenQrMini}>
-                <QRCode value="https://linkflow.url/preview" size={26} color="#FFFFFF" backgroundColor="transparent" />
+                <QRCode value="https://linkflow.url/preview" size={26} color="#000000" backgroundColor="#FFFFFF" />
               </View>
               <View style={styles.screenRowCopy}>
                 <Text style={styles.screenRowTitle}>QR code ready</Text>
                 <Text style={styles.screenRowSub}>Saved to your library</Text>
               </View>
             </View>
-          </LinearGradient>
+          </View>
         </View>
       </View>
 
-      {/* Floating QR card */}
-      <Animated.View
-        style={[
-          styles.qrCard,
-          glow('#792CF0', 0.5, 16, 10),
-          {
-            transform: [
-              { translateY: float.interpolate({ inputRange: [0, 1], outputRange: [0, -7] }) },
-              { rotate: '8deg' },
-            ],
-          },
-        ]}
-      >
+      {/* QR card */}
+      <View style={[styles.qrCard, glow('#000000', 0.5, 14, 8)]}>
         <View style={styles.qrCardTop}>
           <Text style={styles.qrCardTitle}>QR Code</Text>
           <View style={styles.qrCardDot} />
         </View>
         <View style={styles.qrTile}>
-          <QRCode value="https://linkflow.url/preview" size={54} color="#12081F" backgroundColor="#FFFFFF" />
+          <QRCode value="https://linkflow.url/preview" size={54} color="#000000" backgroundColor="#FFFFFF" />
         </View>
         <Text style={styles.qrCardLabel}>Ready to share</Text>
-      </Animated.View>
+      </View>
 
-      {/* Floating short-link chip */}
-      <Animated.View
-        style={[
-          styles.linkChip,
-          glow('#4B139E', 0.5, 12, 8),
-          {
-            transform: [
-              { translateY: floatAlt.interpolate({ inputRange: [0, 1], outputRange: [0, 6] }) },
-            ],
-          },
-        ]}
-      >
+      {/* Short-link chip */}
+      <View style={[styles.linkChip, glow('#000000', 0.45, 10, 6)]}>
         <View style={styles.linkChipIcon}>
-          <AppIcon name="link" size={13} color={L.lavender} />
+          <AppIcon name="link" size={13} color={L.textSecondary} />
         </View>
         <View>
           <Text style={styles.linkChipLabel}>Shortened</Text>
           <Text style={styles.linkChipText}>linkflow.url/9Fk2</Text>
         </View>
         <View style={styles.linkChipCheck}>
-          <AppIcon name="check" size={10} color="#FFFFFF" />
+          <AppIcon name="check" size={10} color={L.bg} />
         </View>
-      </Animated.View>
+      </View>
 
       {/* Small "instant" badge */}
       <View style={styles.instantBadge}>
-        <AppIcon name="zap" size={11} color={L.lavender} />
+        <AppIcon name="zap" size={11} color={L.textSecondary} />
         <Text style={styles.instantText}>1-tap shorten</Text>
       </View>
     </View>
@@ -230,34 +136,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 4,
   },
-  glowLarge: {
-    top: 4,
-    alignSelf: 'center',
-  },
-  glowSmall: {
-    right: -10,
-    bottom: 6,
-  },
-  ringOuter: {
-    position: 'absolute',
-    width: 258,
-    height: 258,
-    borderRadius: 129,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: 'rgba(155, 77, 255, 0.18)',
-  },
-  ringInner: {
-    position: 'absolute',
-    width: 196,
-    height: 196,
-    borderRadius: 98,
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: 'rgba(155, 77, 255, 0.26)',
-  },
   phoneShadow: {
-    shadowColor: '#792CF0',
+    shadowColor: '#000000',
     shadowOpacity: 0.6,
     shadowRadius: 26,
     shadowOffset: { width: 0, height: 18 },
@@ -270,9 +150,9 @@ const styles = StyleSheet.create({
     height: 344,
     borderRadius: 30,
     padding: 6,
-    backgroundColor: '#120A1F',
+    backgroundColor: L.cardDeep,
     borderWidth: 1,
-    borderColor: 'rgba(196, 168, 255, 0.28)',
+    borderColor: L.borderStrong,
   },
   screen: {
     flex: 1,
@@ -281,13 +161,14 @@ const styles = StyleSheet.create({
     paddingTop: 10,
     paddingBottom: 10,
     overflow: 'hidden',
+    backgroundColor: L.bg,
   },
   notch: {
     alignSelf: 'center',
     width: 46,
     height: 5,
     borderRadius: 3,
-    backgroundColor: 'rgba(196, 168, 255, 0.28)',
+    backgroundColor: L.borderStrong,
     marginBottom: 6,
   },
   statusRow: {
@@ -296,13 +177,13 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 10,
   },
-  statusText: { fontSize: 9, fontWeight: '700', color: 'rgba(196, 168, 255, 0.75)' },
+  statusText: { fontSize: 9, fontWeight: '700', color: L.textMuted },
   statusDots: { flexDirection: 'row', gap: 3 },
   statusDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(196, 168, 255, 0.5)',
+    backgroundColor: L.borderStrong,
   },
 
   screenHeader: {
@@ -319,13 +200,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  screenBrand: { flex: 1, fontSize: 11, fontWeight: '800', color: '#FFFFFF' },
+  screenBrand: { flex: 1, fontSize: 11, fontWeight: '800', color: L.text },
   screenBell: {
     width: 18,
     height: 18,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: 'rgba(196, 168, 255, 0.25)',
+    borderColor: L.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -333,7 +214,7 @@ const styles = StyleSheet.create({
     width: 5,
     height: 5,
     borderRadius: 3,
-    backgroundColor: L.lavender,
+    backgroundColor: L.textMuted,
   },
 
   screenInput: {
@@ -345,18 +226,21 @@ const styles = StyleSheet.create({
     paddingRight: 6,
     paddingVertical: 7,
     marginBottom: 10,
+    backgroundColor: L.card,
+    borderWidth: 1,
+    borderColor: L.border,
   },
   screenInputText: {
     flex: 1,
     fontSize: 8.5,
     fontWeight: '600',
-    color: 'rgba(255, 255, 255, 0.86)',
+    color: L.textSecondary,
   },
   screenSend: {
     width: 20,
     height: 20,
     borderRadius: 7,
-    backgroundColor: 'rgba(255, 255, 255, 0.22)',
+    backgroundColor: L.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -367,8 +251,8 @@ const styles = StyleSheet.create({
     gap: 8,
     borderRadius: 11,
     borderWidth: 1,
-    borderColor: 'rgba(155, 77, 255, 0.32)',
-    backgroundColor: 'rgba(155, 77, 255, 0.12)',
+    borderColor: L.border,
+    backgroundColor: L.card,
     paddingHorizontal: 9,
     paddingVertical: 8,
     marginBottom: 10,
@@ -378,15 +262,15 @@ const styles = StyleSheet.create({
     fontSize: 7,
     fontWeight: '700',
     letterSpacing: 0.5,
-    color: 'rgba(196, 181, 232, 0.7)',
+    color: L.textMuted,
     marginBottom: 2,
   },
-  screenResultUrl: { fontSize: 10, fontWeight: '800', color: '#E9D9FF' },
+  screenResultUrl: { fontSize: 10, fontWeight: '800', color: L.text },
   screenCopyBtn: {
     width: 20,
     height: 20,
     borderRadius: 6,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: L.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -397,14 +281,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 7,
   },
-  screenChartLabel: { fontSize: 8.5, fontWeight: '700', color: 'rgba(196, 181, 232, 0.85)' },
+  screenChartLabel: { fontSize: 8.5, fontWeight: '700', color: L.textSecondary },
   screenChartPill: {
     paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 20,
-    backgroundColor: 'rgba(155, 77, 255, 0.22)',
+    borderRadius: 6,
+    backgroundColor: L.card,
+    borderWidth: 1,
+    borderColor: L.border,
   },
-  screenChartPillText: { fontSize: 6.5, fontWeight: '700', color: L.lavender },
+  screenChartPillText: { fontSize: 6.5, fontWeight: '700', color: L.textMuted },
   screenBars: {
     flexDirection: 'row',
     alignItems: 'flex-end',
@@ -413,38 +299,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
     marginBottom: 10,
   },
-  screenBar: { width: 9, borderRadius: 3.5 },
+  screenBar: { width: 9, borderRadius: 2, backgroundColor: L.surfaceSecondary },
+  screenBarActive: { backgroundColor: L.primary },
 
   screenRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     borderRadius: 10,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: L.card,
+    borderWidth: 1,
+    borderColor: L.borderSoft,
     padding: 7,
   },
   screenQrMini: {
     width: 34,
     height: 34,
     borderRadius: 7,
-    backgroundColor: L.primary,
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
   },
   screenRowCopy: { flex: 1 },
-  screenRowTitle: { fontSize: 8.5, fontWeight: '700', color: '#EDE3FF' },
-  screenRowSub: { fontSize: 7, color: 'rgba(196, 181, 232, 0.65)', marginTop: 1 },
+  screenRowTitle: { fontSize: 8.5, fontWeight: '700', color: L.text },
+  screenRowSub: { fontSize: 7, color: L.textMuted, marginTop: 1 },
 
   qrCard: {
     position: 'absolute',
     right: 2,
     top: 26,
     width: 104,
-    borderRadius: 18,
+    borderRadius: 16,
     padding: 10,
-    backgroundColor: 'rgba(32, 21, 50, 0.94)',
+    backgroundColor: L.card,
     borderWidth: 1,
-    borderColor: 'rgba(196, 168, 255, 0.3)',
+    borderColor: L.border,
   },
   qrCardTop: {
     flexDirection: 'row',
@@ -452,10 +341,10 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 8,
   },
-  qrCardTitle: { fontSize: 9, fontWeight: '800', color: '#FFFFFF' },
-  qrCardDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#34D399' },
+  qrCardTitle: { fontSize: 9, fontWeight: '800', color: L.text },
+  qrCardDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#22C55E' },
   qrTile: {
-    borderRadius: 10,
+    borderRadius: 8,
     backgroundColor: '#FFFFFF',
     padding: 5,
     alignItems: 'center',
@@ -479,16 +368,16 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingLeft: 8,
     paddingRight: 10,
-    borderRadius: 14,
-    backgroundColor: 'rgba(32, 21, 50, 0.95)',
+    borderRadius: 12,
+    backgroundColor: L.card,
     borderWidth: 1,
-    borderColor: 'rgba(196, 168, 255, 0.28)',
+    borderColor: L.border,
   },
   linkChipIcon: {
     width: 26,
     height: 26,
-    borderRadius: 9,
-    backgroundColor: 'rgba(155, 77, 255, 0.22)',
+    borderRadius: 8,
+    backgroundColor: L.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -499,12 +388,12 @@ const styles = StyleSheet.create({
     color: L.textMuted,
     textTransform: 'uppercase',
   },
-  linkChipText: { fontSize: 10, fontWeight: '800', color: '#F1E7FF' },
+  linkChipText: { fontSize: 10, fontWeight: '800', color: L.text },
   linkChipCheck: {
     width: 18,
     height: 18,
     borderRadius: 9,
-    backgroundColor: '#22C55E',
+    backgroundColor: L.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -518,10 +407,10 @@ const styles = StyleSheet.create({
     gap: 5,
     paddingHorizontal: 9,
     paddingVertical: 5,
-    borderRadius: 999,
-    backgroundColor: 'rgba(155, 77, 255, 0.16)',
+    borderRadius: 8,
+    backgroundColor: L.card,
     borderWidth: 1,
-    borderColor: 'rgba(196, 168, 255, 0.24)',
+    borderColor: L.border,
   },
-  instantText: { fontSize: 8.5, fontWeight: '700', color: L.lavender },
+  instantText: { fontSize: 8.5, fontWeight: '700', color: L.textSecondary },
 });
